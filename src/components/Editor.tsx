@@ -318,7 +318,7 @@ const [corrections, setCorrections] = useState<any[]>([]);
 
     } catch (error: any) {
       console.error(error);
-      toast.error("Hata: " + error.message);
+      toast.error("Mistake: " + error.message);
       setLoading(false);
     }
   };
@@ -450,7 +450,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         toast.success("PDF loaded!");
         
       } catch (err: any) { 
-  console.error("PDF HATA:", err);
+  console.error("PDF Mistake:", err);
   toast.error("PDF error: " + err?.message); 
       } 
       finally { setUploading(false); }

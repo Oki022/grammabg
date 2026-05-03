@@ -666,7 +666,7 @@ const handleDownloadPdf = async () => {
   </button>
 
   {/* TONE SELECTOR - flex-1 ile kalan tüm alanı kaplar */}
-  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur">
+  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur ml-auto">
     <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
       Tone
     </span>

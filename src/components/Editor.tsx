@@ -639,78 +639,60 @@ const handleDownloadPdf = async () => {
 
       <div className="relative mx-auto max-w-4xl rounded-2xl border border-border bg-gradient-card p-4 md:p-6 shadow-card-premium backdrop-blur">
         {/* TOP ROW: History (left) + Tone (right) */}
-        <div className="mb-5 flex items-center justify-between gap-3">
-          {/* HISTORY (premium feature, locked on Free) */}
+<div className="mb-5 flex items-center justify-between gap-3">
+
+  <button
+    type="button"
+    onClick={async () => {
+      if (isPro) {
+        const { data: historyData } = await supabase
+          .from('history' as any)
+          .select('*')
+          .eq('user_id', user!.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (historyData) setHistory(historyData);
+        setHistoryDrawerOpen(true);
+        return;
+      }
+      setHistoryModalOpen(true);
+    }}
+    aria-label={isPro ? "Open history" : "History — Pro feature"}
+    title={isPro ? "History" : "History — Pro feature"}
+    className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-1 text-muted-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/80 transition-smooth backdrop-blur"
+  >
+    <History className="h-4 w-4" />
+    {!isPro && <Lock className="h-3 w-3" />}
+  </button>
+
+  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur flex-1 max-w-xs sm:max-w-sm ml-2">
+    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">
+      Tone
+    </span>
+    <div className="flex sm:grid sm:grid-cols-4 overflow-x-auto gap-1 w-full">
+      {TONES.map((t) => {
+        const active = tone === t;
+        return (
           <button
-            type="button"
-            onClick={async () => {
-              console.log("History'e tıklandı, isPro durumu:", isPro); // Bunu ekle!
-              if (isPro) {
-             // History verilerini çek
-             const { data: historyData } = await supabase
-            .from('history' as any)
-            .select('*')
-            .eq('user_id', user!.id)
-            .order('created_at', { ascending: false })
-            .limit(20);
-            if (historyData) setHistory(historyData);
-            setHistoryDrawerOpen(true);
-            return;
-          }
-              setHistoryModalOpen(true);
-            }}
-            aria-label={isPro ? "Open history" : "History — Pro feature"}
-            title={isPro ? "History" : "History — Pro feature"}
-            className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-1 text-muted-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/80 transition-smooth backdrop-blur"
-          >
-            <History className="h-4 w-4" />
-            {!isPro && <Lock className="h-3 w-3" />}
-          </button>
-
-          <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur">
-            <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">
-              Tone
-            </span>
-            <div
-              role="radiogroup"
-              aria-label="Writing tone"
-              className="grid grid-cols-4 gap-1 w-full sm:w-auto sm:flex sm:items-center"
-            >
-           {/* TONE SELECTOR - HEM DESKTOP HEM MOBİL UYUMLU */}
-        <div className="w-full flex flex-col gap-2 mt-4">
-          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 uppercase tracking-wider px-1">
-            <History className="w-3.5 h-3.5" />
-            <span>Tone Selection</span>
-          </div>
-
-          <div className="w-full bg-secondary/30 p-1 rounded-xl border border-border/50">
-            {/* MOBİLDE: flex (kaydırmalı) | DESKTOPTA: sm:grid (4 sütun) */}
-            <div className="flex sm:grid sm:grid-cols-4 overflow-x-auto no-scrollbar gap-1 w-full">
-              {TONES.map((t) => {
-                const active = tone === t;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setTone(t)}
-                    className={
-                      (active
-                        ? "bg-gradient-emerald text-primary-foreground shadow-md font-bold "
-                        : "text-muted-foreground hover:bg-secondary/80 font-medium ") +
-                      "px-4 py-2 rounded-lg text-xs text-center transition-all whitespace-nowrap flex-1 min-w-[100px] sm:min-w-0"
-                    }
-                  >
-                    {t}
-                  </button>
+            key={t}
+            role="radio"
+            aria-checked={active}
+            onClick={() => setTone(t)}
+            className={
+              (active
+                ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
+              "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap flex-shrink-0 sm:flex-shrink"
+                }
+                 >
+                  {t}
+                </button>
                 );
-              })}
-            </div>
-          </div>
-        </div>
+               })}
+                </div>
+               </div>
 
-          </div>
-         </div>
-        </div>
-
+              </div>
         {/* INPUT */}
         <div>
           {/* Toolbar row — sits above the textarea on every breakpoint */}

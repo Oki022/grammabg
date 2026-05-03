@@ -677,8 +677,24 @@ const handleDownloadPdf = async () => {
               className="grid grid-cols-4 gap-1 w-full sm:w-auto sm:flex sm:items-center"
             >
            {/* Tones Seçici Dış Kutusu - Jilet gibi kaydırmalı versiyon */}
-          <div className="bg-secondary/30 p-1 rounded-xl border border-border/50 w-full overflow-hidden">
-            <div className="flex overflow-x-auto no-scrollbar gap-2 p-1 w-full snap-x snap-mandatory">
+          {/* TONE SELECTOR - TAM GENİŞLİK VE KAYDIRMALI */}
+        <div className="w-full flex flex-col gap-3 mt-2">
+          {/* Üst Kısım: İkon ve Başlık */}
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground/80 px-1">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/50 shrink-0">
+              <History className="w-4 h-4 opacity-70" />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5 opacity-50" />
+              <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent font-bold">
+                TONE
+              </span>
+            </div>
+          </div>
+
+          {/* Butonların Olduğu Kaydırmalı Alan */}
+          <div className="w-full bg-secondary/30 p-1.5 rounded-xl border border-border/50">
+            <div className="flex overflow-x-auto no-scrollbar w-full gap-2 items-center py-0.5 px-0.5">
               {TONES.map((t) => {
                 const active = tone === t;
                 return (
@@ -689,9 +705,9 @@ const handleDownloadPdf = async () => {
                     onClick={() => setTone(t)}
                     className={
                       (active
-                        ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
+                        ? "bg-gradient-emerald text-primary-foreground shadow-sm font-semibold "
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-                      "px-5 py-2 rounded-lg text-xs text-center transition-all duration-300 whitespace-nowrap min-w-fit snap-start border border-transparent"
+                      "px-5 py-2 rounded-lg text-xs transition-all whitespace-nowrap min-w-fit flex-shrink-0 border border-transparent"
                     }
                   >
                     {t}
@@ -700,6 +716,7 @@ const handleDownloadPdf = async () => {
               })}
             </div>
           </div>
+        </div>
 
           </div>
          </div>

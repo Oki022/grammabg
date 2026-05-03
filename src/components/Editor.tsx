@@ -676,32 +676,33 @@ const handleDownloadPdf = async () => {
               aria-label="Writing tone"
               className="grid grid-cols-4 gap-1 w-full sm:w-auto sm:flex sm:items-center"
             >
-           {/* Tones Seçici Dış Kutusu */}
-          <div className="flex overflow-x-auto no-scrollbar gap-1 p-1 w-full sm:grid sm:grid-cols-4">
-            {TONES.map((t) => {
-              const active = tone === t;
-              return (
-                <button
-                  key={t}
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setTone(t)}
-                  className={
-                    (active
-                      ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-                    "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap min-w-fit flex-1"
-                  }
-                >
-                  {t}
-                </button>
-              );
-            })}
-          </div>
+           {/* Tones Seçici Dış Kutusu - Jilet gibi kaydırmalı versiyon */}
+          <div className="bg-secondary/30 p-1 rounded-xl border border-border/50 w-full overflow-hidden">
+            <div className="flex overflow-x-auto no-scrollbar gap-2 p-1 w-full snap-x snap-mandatory">
+              {TONES.map((t) => {
+                const active = tone === t;
+                return (
+                  <button
+                    key={t}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setTone(t)}
+                    className={
+                      (active
+                        ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
+                      "px-5 py-2 rounded-lg text-xs text-center transition-all duration-300 whitespace-nowrap min-w-fit snap-start border border-transparent"
+                    }
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           </div>
-
+         </div>
         </div>
 
         {/* INPUT */}

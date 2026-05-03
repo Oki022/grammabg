@@ -144,7 +144,7 @@ const Header = () => {
               ) : (
                 <>
                   <Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full">Log in</Button>
+                    <Button variant="ghost" size="sm" className="w-full text-foreground">Log in</Button>
                   </Link>
                   <Link to="/register" className="flex-1" onClick={() => setOpen(false)}>
                     <Button variant="emerald" size="sm" className="w-full">Sign up</Button>

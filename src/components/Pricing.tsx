@@ -23,13 +23,16 @@ type Plan = {
 
 const handleUpgrade = async (priceId: string) => {
   try {
-    // 1. Kullanıcının oturumunu kontrol ediyoruz
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      alert("Lütfen önce giriş yapın.");
+      // Karışık dilli alert yerine temiz bir İngilizce mesaj
+      alert("Authentication Required: Please log in to upgrade your plan.");
+      // Opsiyonel: Kullanıcıyı direkt giriş sayfasına atabilirsin
+      // window.location.href = "/auth"; 
       return;
     }
+    // ... geri kalan kod
 
     // 2. Ödeme oturumu oluşturmak için fonksiyonu çağırıyoruz
     const response = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/create-checkout-session', {
@@ -92,10 +95,10 @@ const plans: Plan[] = [
     period: "/mo",
     description: "Unlimited power for professionals.",
     features: [
-      "Unlimited AI text checks", 
-      "Unlock Unlimited Word & PDF Uploads", 
-      "Export to Word & PDF", 
-      "History & Custom AI Tones"
+      "Full Correction History", // (Tüm geçmişi saklama özelliği varsa en mantıklısı bu)
+      "Advanced Grammar Insights", // (Daha detaylı analiz anlamına gelir)
+      "Priority AI Processing", // (Daha hızlı sonuç alma vurgusu)
+      "Unlimited Document History" // (Geçmişe vurgu yapmaya devam etmek için)
     ],
     cta: "Start Pro Now",
     highlighted: true,

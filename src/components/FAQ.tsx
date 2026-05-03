@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: "Does it just fix typos, or improve style too?",
-    a: "Both! GrammaBG corrects spelling and grammar, but also lets you choose specific TONES (Standard, Formal, Friendly, Academic) to restructure sentences and perfectly match your audience.",
+    a: "Both! GrammaBG corrects spelling and grammar while using advanced AI to restructure sentences, ensuring your writing is clear, professional, and perfectly suited for your audience.",
   },
   {
     q: "What file formats do you support?",

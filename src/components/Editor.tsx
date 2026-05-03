@@ -639,8 +639,9 @@ const handleDownloadPdf = async () => {
 
       <div className="relative mx-auto max-w-4xl rounded-2xl border border-border bg-gradient-card p-4 md:p-6 shadow-card-premium backdrop-blur">
         {/* TOP ROW: History (left) + Tone (right) */}
-<div className="mb-5 flex items-center justify-between gap-3">
+<div className="mb-5 flex items-center gap-2 w-full">
 
+  {/* HISTORY BUTTON */}
   <button
     type="button"
     onClick={async () => {
@@ -658,41 +659,40 @@ const handleDownloadPdf = async () => {
       setHistoryModalOpen(true);
     }}
     aria-label={isPro ? "Open history" : "History — Pro feature"}
-    title={isPro ? "History" : "History — Pro feature"}
     className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-1 text-muted-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/80 transition-smooth backdrop-blur"
   >
     <History className="h-4 w-4" />
     {!isPro && <Lock className="h-3 w-3" />}
   </button>
 
-  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur flex-1 max-w-xs sm:max-w-sm ml-2">
-    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0">
+  {/* TONE SELECTOR - flex-1 ile kalan tüm alanı kaplar */}
+  <div className="flex-1 flex items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur overflow-hidden">
+    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 pr-1">
       Tone
     </span>
-    <div className="flex sm:grid sm:grid-cols-4 overflow-x-auto gap-1 w-full">
+    {/* Mobil: overflow-x-auto scroll | Desktop: grid 4 kolon */}
+    <div className="flex sm:grid sm:grid-cols-4 gap-1 w-full overflow-x-auto scrollbar-hide">
       {TONES.map((t) => {
         const active = tone === t;
         return (
           <button
             key={t}
-            role="radio"
-            aria-checked={active}
             onClick={() => setTone(t)}
             className={
               (active
                 ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-              "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap flex-shrink-0 sm:flex-shrink"
-                }
-                 >
-                  {t}
-                </button>
-                );
-               })}
-                </div>
-               </div>
+              "shrink-0 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
+            }
+          >
+            {t}
+          </button>
+        );
+      })}
+    </div>
+  </div>
 
-              </div>
+</div>
         {/* INPUT */}
         <div>
           {/* Toolbar row — sits above the textarea on every breakpoint */}

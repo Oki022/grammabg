@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type PlanId = "free" | "pro" | "yearly";
 
@@ -18,39 +18,57 @@ type Plan = {
   badge?: string;
   stripePriceId?: string;
 };
-const handleCheckout = async (priceId?: string) => {
-  if (!priceId) {
-    console.log("This is a free plan, there's no need to go to the payment page.");
-    // Burada kullanıcıyı direkt uygulamaya yönlendirebilirsin (örneğin: window.location.href = '/app')
-    return;
-  }
 
+// --- FONKSİYONLAR ---
+
+const handleUpgrade = async (priceId: string) => {
   try {
-    // 1. Kendi backend'imize (Supabase Edge Function) istek atıyoruz
+    // 1. Kullanıcının oturumunu kontrol ediyoruz
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert("Lütfen önce giriş yapın.");
+      return;
+    }
+
+    // 2. Ödeme oturumu oluşturmak için fonksiyonu çağırıyoruz
     const response = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/create-checkout-session', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // Eğer kullanıcı giriş yapmışsa, token'ı buraya eklemen çok iyi olur:
-        // 'Authorization': `Bearer ${session.access_token}`
+        'Authorization': `Bearer ${session.access_token}`
       },
       body: JSON.stringify({ priceId }),
     });
 
     const data = await response.json();
 
-    // 2. Eğer backend bize bir Stripe URL'si verdiyse, müşteriyi oraya şutluyoruz!
     if (data.url) {
+      // Stripe ödeme sayfasına yönlendir
       window.location.href = data.url;
     } else {
-      console.error("Stripe URL could not be obtained.:", data);
+      console.error("Stripe URL alınamadı:", data);
       alert("A problem occurred while going to the payment page.");
     }
   } catch (error) {
-    console.error("Payment error:", error);
+    console.error("Ödeme hatası:", error);
     alert("The payment process could not be initiated.");
   }
 };
+
+const handleCheckout = async (priceId?: string) => {
+  if (!priceId) {
+    console.log("This is a free plan, no payment needed.");
+    // Ücretsiz plan ise direkt ana sayfaya veya profile atabilirsin
+    window.location.href = '/';
+    return;
+  }
+  
+  // Ücretli plan ise upgrade fonksiyonunu tetikle
+  await handleUpgrade(priceId);
+};
+
+// --- PLAN VERİLERİ ---
 
 const plans: Plan[] = [
   {
@@ -60,10 +78,10 @@ const plans: Plan[] = [
     period: "/mo",
     description: "Perfect for trying out the AI.",
     features: [
-      "5 AI text checks per day", // Sadece metin kutusu için 5 hak olduğunu belli ettik
-      "1 Word (.docx) file fix per day", // Dosya yükleme limitinin 1 olduğunu çaktık
+      "5 AI text checks per day",
+      "1 Word (.docx) file fix per day",
       "Standard grammar fixes", 
-      "No PDF support" // PDF yüklemek isteyen pro'ya geçecek
+      "No PDF support"
     ],
     cta: "Get Started",
   },
@@ -82,7 +100,7 @@ const plans: Plan[] = [
     cta: "Start Pro Now",
     highlighted: true,
     badge: "Popular",
-    stripePriceId: "price_1TSdcpH7gfnEgeldc8rd1sR5", // <-- AYLIK KODUN BURADA
+    stripePriceId: "price_1TSdcpH7gfnEgeldc8rd1sR5",
   },
   {
     id: "yearly",
@@ -97,13 +115,15 @@ const plans: Plan[] = [
       "Get 2 Months FREE!"
     ],
     cta: "Save Now",
-    stripePriceId: "price_1TSddXH7gfnEgeldBwm8sfAV", // <-- YILLIK KODUNU BURAYA YAPIŞTIR
+    stripePriceId: "price_1TSddXH7gfnEgeldBwm8sfAV",
   }
-]
+];
+
+// --- COMPONENT ---
+
 const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const { user } = useAuth();
-  // Simulated current plan: logged-in users default to "free" unless their
-  // metadata marks them as "pro". Logged-out users have no current plan.
+
   const currentPlan: PlanId | null = user
     ? ((user.user_metadata as { plan?: PlanId } | null)?.plan ?? "free")
     : null;
@@ -111,8 +131,6 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   return (
     <section id="pricing" className="container py-12 md:py-20">
       
-      {/* ŞIK GERİ DÖN BUTONU - Sayfanın en üstünde, sola hizalı */}
-{/* ŞIK GERİ DÖN BUTONU - Sadece showBackButton true ise görünür */}
       {showBackButton && (
         <div className="w-full flex justify-end mb-8">
           <Link to="/profile">
@@ -138,7 +156,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
           const isCurrent = currentPlan === p.id;
           return (
             <div
-              key={p.name}
+              key={p.id}
               className={`relative rounded-2xl border p-7 flex flex-col transition-smooth backdrop-blur ${
                 p.highlighted
                   ? "border-primary/60 bg-gradient-card shadow-emerald md:scale-105 md:-my-2"
@@ -175,8 +193,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                 size="lg"
                 className="w-full"
                 disabled={isCurrent}
-                aria-disabled={isCurrent}
-                onClick={() => handleCheckout(p.stripePriceId)} // <-- İŞTE SİHİRLİ DOKUNUŞ BURADA!
+                onClick={() => handleCheckout(p.stripePriceId)}
               >
                 {isCurrent ? "Current Plan" : p.cta}
               </Button>

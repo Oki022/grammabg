@@ -3,8 +3,8 @@ import { CheckCircle2, Languages, FileText } from "lucide-react";
 const features = [
   {
     icon: CheckCircle2,
-    title: "Grammar & Tone Control",
-    desc: "Fix errors instantly and rewrite your text in Standard, Formal, Friendly, or Academic tones.",
+    title: "Smart Grammar Fixes",
+    desc: "Fix errors instantly and enhance your text with advanced AI that ensures perfect clarity and professional flow.",
   },
   {
     icon: Languages,

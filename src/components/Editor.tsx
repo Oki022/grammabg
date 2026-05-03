@@ -666,7 +666,7 @@ const handleDownloadPdf = async () => {
   </button>
 
   {/* TONE SELECTOR - flex-1 ile kalan tüm alanı kaplar */}
-  <div className="flex-1 flex items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur overflow-hidden">
+  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur">
     <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
       Tone
     </span>
@@ -682,7 +682,7 @@ const handleDownloadPdf = async () => {
               (active
                 ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-              "shrink-0 sm:flex-1 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
+              "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
             }
           >
             {t}

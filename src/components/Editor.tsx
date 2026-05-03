@@ -676,27 +676,32 @@ const handleDownloadPdf = async () => {
               aria-label="Writing tone"
               className="grid grid-cols-4 gap-1 w-full sm:w-auto sm:flex sm:items-center"
             >
-              {TONES.map((t) => {
-                const active = tone === t;
-                return (
-                  <button
-                    key={t}
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setTone(t)}
-                    className={
-                      (active
-                        ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-                      "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
-                    }
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
+           {/* Tones Seçici Dış Kutusu */}
+          <div className="flex overflow-x-auto no-scrollbar gap-1 p-1 w-full sm:grid sm:grid-cols-4">
+            {TONES.map((t) => {
+              const active = tone === t;
+              return (
+                <button
+                  key={t}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setTone(t)}
+                  className={
+                    (active
+                      ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
+                    "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap min-w-fit flex-1"
+                  }
+                >
+                  {t}
+                </button>
+              );
+            })}
           </div>
+          </div>
+
+          </div>
+
         </div>
 
         {/* INPUT */}
@@ -946,25 +951,26 @@ const handleDownloadPdf = async () => {
         )}
 
         {/* DOWNLOAD ACTION */}
-        <div className="flex flex-col items-center gap-2 mt-5">
+        <div className="flex flex-col items-center gap-2 mt-5 w-full">
           <Button
             variant="outline"
             size="lg"
             disabled={!outputText}
             onClick={correctedFileBase64 ? handleDownloadWord : handleDownloadPdf}
-            className="min-w-[260px]"
+            /* min-w-[260px] sildik, yerine w-full (mobilde tam genişlik) ve sm:w-auto (masaüstünde normal) ekledik */
+            className="w-full sm:w-auto px-4 text-sm sm:text-base flex items-center justify-center"
             title={!docx ? "Upload a file to enable download" : ""}
           >
-            <FileText className="mr-2 h-4 w-4" />
-            Download Corrected Version
-            <ChevronDown className="ml-2 h-4 w-4 opacity-70" />
+            <FileText className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">Download Corrected Version</span>
+            <ChevronDown className="ml-2 h-4 w-4 opacity-70 shrink-0" />
           </Button>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[11px] text-muted-foreground text-center">
             Supports .docx and .pdf formats
           </span>
         </div>
         {!docx && outputText && (
-          <p className="mt-3 text-center text-xs text-muted-foreground">
+          <p className="mt-3 text-center text-xs text-muted-foreground px-4">
             Upload a .docx file to download a corrected Word document with original formatting preserved.
           </p>
         )}

@@ -676,38 +676,27 @@ const handleDownloadPdf = async () => {
               aria-label="Writing tone"
               className="grid grid-cols-4 gap-1 w-full sm:w-auto sm:flex sm:items-center"
             >
-           {/* Tones Seçici Dış Kutusu - Jilet gibi kaydırmalı versiyon */}
-          {/* TONE SELECTOR - TAM GENİŞLİK VE KAYDIRMALI */}
-        <div className="w-full flex flex-col gap-3 mt-2">
-          {/* Üst Kısım: İkon ve Başlık */}
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground/80 px-1">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-secondary/50 shrink-0">
-              <History className="w-4 h-4 opacity-70" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Lock className="w-3.5 h-3.5 opacity-50" />
-              <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent font-bold">
-                TONE
-              </span>
-            </div>
+           {/* TONE SELECTOR - HEM DESKTOP HEM MOBİL UYUMLU */}
+        <div className="w-full flex flex-col gap-2 mt-4">
+          <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-400 uppercase tracking-wider px-1">
+            <History className="w-3.5 h-3.5" />
+            <span>Tone Selection</span>
           </div>
 
-          {/* Butonların Olduğu Kaydırmalı Alan */}
-          <div className="w-full bg-secondary/30 p-1.5 rounded-xl border border-border/50">
-            <div className="flex overflow-x-auto no-scrollbar w-full gap-2 items-center py-0.5 px-0.5">
+          <div className="w-full bg-secondary/30 p-1 rounded-xl border border-border/50">
+            {/* MOBİLDE: flex (kaydırmalı) | DESKTOPTA: sm:grid (4 sütun) */}
+            <div className="flex sm:grid sm:grid-cols-4 overflow-x-auto no-scrollbar gap-1 w-full">
               {TONES.map((t) => {
                 const active = tone === t;
                 return (
                   <button
                     key={t}
-                    role="radio"
-                    aria-checked={active}
                     onClick={() => setTone(t)}
                     className={
                       (active
-                        ? "bg-gradient-emerald text-primary-foreground shadow-sm font-semibold "
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-                      "px-5 py-2 rounded-lg text-xs transition-all whitespace-nowrap min-w-fit flex-shrink-0 border border-transparent"
+                        ? "bg-gradient-emerald text-primary-foreground shadow-md font-bold "
+                        : "text-muted-foreground hover:bg-secondary/80 font-medium ") +
+                      "px-4 py-2 rounded-lg text-xs text-center transition-all whitespace-nowrap flex-1 min-w-[100px] sm:min-w-0"
                     }
                   >
                     {t}

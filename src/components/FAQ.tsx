@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     q: "Is there a daily limit?",
-    a: "Free users get 5 AI corrections per day, resetting at midnight. If you are a heavy user, our Pro plan offers unlimited checks, history saving, and advanced export options.",
+    a: "Free users get 5 AI text corrections and 1 Word (.docx) file fix per day, resetting at midnight. If you are a heavy user, our Pro plan offers unlimited checks, history saving, and advanced export options.",
   },
   {
     q: "Is my text private?",

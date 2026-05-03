@@ -673,8 +673,9 @@ const handleDownloadPdf = async () => {
     <History className="h-4 w-4" />
     {!isPro && <Lock className="h-3 w-3" />}
   </button>
-
-  {/* TONE SELECTOR - flex-1 ile kalan tüm alanı kaplar */}
+  
+  {/* TONE SELECTOR ASKIYA ALINDI - BURADAN BAŞLIYOR */}
+  {false && (
   <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur ml-auto">
     <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
       Tone
@@ -700,7 +701,8 @@ const handleDownloadPdf = async () => {
       })}
     </div>
   </div>
-
+  )}
+  
 </div>
         {/* INPUT */}
         <div>
@@ -843,6 +845,8 @@ const handleDownloadPdf = async () => {
 
           {/* Output action bar */}
           <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+            {/* LISTEN BUTONU ASKIYA ALINDI */}
+            {false && (
             <button
               onClick={handleListen}
               disabled={!outputText}
@@ -852,6 +856,8 @@ const handleDownloadPdf = async () => {
               {speaking ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
               {speaking ? "Stop" : "Listen"}
             </button>
+            )}
+             {/* Buradan sonra muhtemelen Kopyala veya Paylaş butonların geliyordur, onlar açık kalsın */}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

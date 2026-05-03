@@ -474,7 +474,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         } else {
           setDocx({ fileName: file.name.replace(".docx", "") });
         }
-
+        setTone("Standard");
         toast.success("Word file loaded with formatting!");
       } catch (error) {
         console.error("Word read Error:", error);
@@ -516,6 +516,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
           toast.error("❌ This PDF is scanned or image-based and cannot be read. Please use a text-based PDF or copy-paste the text manually.", { duration: 6000 });
           return;
         }
+        setTone("Standard");
         toast.success("PDF loaded!");
         
       } catch (err: any) { 
@@ -677,7 +678,7 @@ const handleDownloadPdf = async () => {
     </span>
     {/* Mobil: overflow-x-auto scroll | Desktop: grid 4 kolon */}
     <div className="flex sm:grid sm:grid-cols-4 gap-1 w-full overflow-x-auto scrollbar-hide">
-      {TONES.map((t) => {
+      {TONES.filter(t => !docx || t === "Standard").map((t) => {
         const active = tone === t;
         return (
           <button

@@ -202,6 +202,7 @@ const Editor = () => {
   const [wordModalOpen, setWordModalOpen] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [docx, setDocx] = useState<any>(null);
+  const [pdfLoaded, setPdfLoaded] = useState(false);
   const [originalSlots, setOriginalSlots] = useState([]);
   const [correctedXml, setCorrectedXml] = useState(null);
   const [correctedFileBase64, setCorrectedFileBase64] = useState<string | null>(null);
@@ -361,6 +362,7 @@ const [corrections, setCorrections] = useState<any[]>([]);
   };
   // 5. YARDIMCI FONKSİYONLAR (Temizle, Kopyala, Dinle, Git)
   const handleClear = () => {
+    setPdfLoaded(false);
     setInputText(""); 
     setOutputText(""); 
     setDocx(null);
@@ -517,6 +519,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
           return;
         }
         setTone("Standard");
+        setPdfLoaded(true);
         toast.success("PDF loaded!");
         
       } catch (err: any) { 
@@ -678,7 +681,7 @@ const handleDownloadPdf = async () => {
     </span>
     {/* Mobil: overflow-x-auto scroll | Desktop: grid 4 kolon */}
     <div className="flex sm:grid sm:grid-cols-4 gap-1 w-full overflow-x-auto scrollbar-hide">
-      {TONES.filter(t => !docx || t === "Standard").map((t) => {
+      {TONES.filter(t => (!docx && !pdfLoaded) || t === "Standard").map((t) => {
         const active = tone === t;
         return (
           <button

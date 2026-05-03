@@ -18,7 +18,7 @@ const App = () => {
   // --- TADİLAT MODU AYARI ---
   // import.meta.env.DEV şu demek: "Eğer bilgisayarımda çalışıyorsam (npm run dev) burası true olur"
   const isLocal = import.meta.env.DEV;
-  const bakimda = true; 
+  const bakimda = false; 
 
   // Eğer bakimda modundaysak VE kendi bilgisayarımızda DEĞİLSEK (yani canlıdaysak) siyah ekranı göster
   if (bakimda && !isLocal) {

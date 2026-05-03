@@ -246,10 +246,15 @@ const [corrections, setCorrections] = useState<any[]>([]);
   // --- 1. GÜVENLİ KAPSÜL VE ZIRH (Belgeyi Asla Çökertmez) ---
   // --- 1. KUSURSUZ XML CERRAH MİMARİSİ (DOM Parser - Asla Çökmez) ---
   const handleFix = async () => {
-    // Yüklenen dosyayı direkt HTML input'un içinden alıyoruz (Hata vermez)
     const currentWordFile = docxInputRef.current?.files?.[0];
-
     if ((!currentWordFile && !inputText) || loading || limitReached) return;
+    
+    // Giriş yapılmamışsa login'e yönlendir
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    
     setLoading(true);
     
     try {

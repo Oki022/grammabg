@@ -16,10 +16,12 @@ const queryClient = new QueryClient();
 
 const App = () => {
   // --- TADİLAT MODU AYARI ---
-  // Siteyi kapatmak için: true | Siteyi açmak için: false
+  // import.meta.env.DEV şu demek: "Eğer bilgisayarımda çalışıyorsam (npm run dev) burası true olur"
+  const isLocal = import.meta.env.DEV;
   const bakimda = true; 
 
-  if (bakimda) {
+  // Eğer bakimda modundaysak VE kendi bilgisayarımızda DEĞİLSEK (yani canlıdaysak) siyah ekranı göster
+  if (bakimda && !isLocal) {
     return (
       <div style={{ 
         height: '100vh', 
@@ -40,6 +42,7 @@ const App = () => {
       </div>
     );
   }
+  // --- TADİLAT MODU BİTİŞİ ---
   // --- TADİLAT MODU BİTİŞİ ---
 
   return (

@@ -7,6 +7,8 @@ type AuthContextValue = {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  isPro: boolean;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -33,12 +35,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => {
+const signOut = async () => {
     await supabase.auth.signOut();
   };
 
+  const refreshUser = async () => {
+    const { data } = await supabase.auth.refreshSession();
+    if (data.user) setUser(data.user);
+    if (data.session) setSession(data.session);
+  };
+
+  const isPro = 
+    user?.user_metadata?.plan === "pro" ||
+    user?.app_metadata?.plan === "pro";
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, isPro, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

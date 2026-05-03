@@ -16,6 +16,40 @@ type Plan = {
   cta: string;
   highlighted?: boolean;
   badge?: string;
+  stripePriceId?: string;
+};
+const handleCheckout = async (priceId?: string) => {
+  if (!priceId) {
+    console.log("This is a free plan, there's no need to go to the payment page.");
+    // Burada kullanıcıyı direkt uygulamaya yönlendirebilirsin (örneğin: window.location.href = '/app')
+    return;
+  }
+
+  try {
+    // 1. Kendi backend'imize (Supabase Edge Function) istek atıyoruz
+    const response = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Eğer kullanıcı giriş yapmışsa, token'ı buraya eklemen çok iyi olur:
+        // 'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ priceId }),
+    });
+
+    const data = await response.json();
+
+    // 2. Eğer backend bize bir Stripe URL'si verdiyse, müşteriyi oraya şutluyoruz!
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      console.error("Stripe URL could not be obtained.:", data);
+      alert("A problem occurred while going to the payment page.");
+    }
+  } catch (error) {
+    console.error("Payment error:", error);
+    alert("The payment process could not be initiated.");
+  }
 };
 
 const plans: Plan[] = [
@@ -25,7 +59,12 @@ const plans: Plan[] = [
     price: "€0",
     period: "/mo",
     description: "Perfect for trying out the AI.",
-    features: ["5 AI checks per day", "Standard grammar fixes", "Word (.docx) support only"],
+    features: [
+      "5 AI text checks per day", // Sadece metin kutusu için 5 hak olduğunu belli ettik
+      "1 Word (.docx) file fix per day", // Dosya yükleme limitinin 1 olduğunu çaktık
+      "Standard grammar fixes", 
+      "No PDF support" // PDF yüklemek isteyen pro'ya geçecek
+    ],
     cta: "Get Started",
   },
   {
@@ -34,22 +73,33 @@ const plans: Plan[] = [
     price: "€5.99",
     period: "/mo",
     description: "Unlimited power for professionals.",
-    features: ["Unlimited AI checks", "Unlock PDF Upload & Export", "History & Custom AI Tones"],
+    features: [
+      "Unlimited AI text checks", 
+      "Unlock Unlimited Word & PDF Uploads", 
+      "Export to Word & PDF", 
+      "History & Custom AI Tones"
+    ],
     cta: "Start Pro Now",
     highlighted: true,
     badge: "Popular",
+    stripePriceId: "price_1TSdcpH7gfnEgeldc8rd1sR5", // <-- AYLIK KODUN BURADA
   },
   {
     id: "yearly",
     name: "Yearly Pro",
     price: "€49.99",
     period: "/year",
-    description: "Best value for power users.",
-    features: ["All Pro Plan features", "Billed annually (€49.99/year)", "Save 30% compared to monthly"],
+    description: "Ultimate experience & best value.",
+    features: [
+      "All Pro Plan features", 
+      "🚀 Unlock 'Ultimate AI' Engine", 
+      "Priority customer support", 
+      "Get 2 Months FREE!"
+    ],
     cta: "Save Now",
-  },
-];
-
+    stripePriceId: "price_1TSddXH7gfnEgeldBwm8sfAV", // <-- YILLIK KODUNU BURAYA YAPIŞTIR
+  }
+]
 const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const { user } = useAuth();
   // Simulated current plan: logged-in users default to "free" unless their
@@ -126,6 +176,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                 className="w-full"
                 disabled={isCurrent}
                 aria-disabled={isCurrent}
+                onClick={() => handleCheckout(p.stripePriceId)} // <-- İŞTE SİHİRLİ DOKUNUŞ BURADA!
               >
                 {isCurrent ? "Current Plan" : p.cta}
               </Button>

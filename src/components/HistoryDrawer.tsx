@@ -1,11 +1,15 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { History, Clock } from "lucide-react";
+import { History, Clock, Lock, Sparkles } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth"; 
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 interface HistoryDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  history?: any[]; // <--- GERÇEK VERİLERİMİZ İÇİN KABLO GİRİŞİ
+  history?: any[];
+  onSelect?: (item: any) => void;
 }
 
 const toneStyles: Record<string, string> = {
@@ -15,8 +19,8 @@ const toneStyles: Record<string, string> = {
   Academic: "bg-muted text-muted-foreground border-border",
 };
 
-// history = [] diyerek veri gelmezse sitenin çökmesini engelledik
-const HistoryDrawer = ({ open, onOpenChange, history = [] }: HistoryDrawerProps) => {
+const HistoryDrawer = ({ open, onOpenChange, history = [], onSelect }: HistoryDrawerProps) => {
+  const { isPro, loading } = useAuth();
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -40,16 +44,33 @@ const HistoryDrawer = ({ open, onOpenChange, history = [] }: HistoryDrawerProps)
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          
-          {/* Eğer geçmiş boşsa bu mesaj çıkacak */}
-          {history.length === 0 ? (
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground pt-10 animate-pulse">
+              Veriler kontrol ediliyor...
+            </p>
+          ) : !isPro ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4">
+              <div className="h-16 w-16 rounded-full bg-secondary flex items-center justify-center">
+                <Lock className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-display text-lg font-bold">History is a Pro Feature</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upgrade to Pro to save and access your previous grammar corrections anytime.
+                </p>
+              </div>
+              <Link to="/pricing" onClick={() => onOpenChange(false)}>
+                <Button className="bg-gradient-emerald text-white border-none shadow-emerald hover:opacity-90">
+                  <Sparkles className="mr-2 h-4 w-4" /> Upgrade Now
+                </Button>
+              </Link>
+            </div>
+          ) : history.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground pt-10">
               No corrections yet. Start typing to see your history!
             </p>
           ) : (
-            /* Geçmiş doluysa listeyi buraya dökecek */
             history.map((item, idx) => {
-              // Supabase'den gelen karmaşık tarihi temiz formata çeviriyoruz
               const dateObj = new Date(item.created_at);
               const formattedDate = isNaN(dateObj.getTime()) 
                 ? "Just now" 
@@ -59,6 +80,10 @@ const HistoryDrawer = ({ open, onOpenChange, history = [] }: HistoryDrawerProps)
                 <button
                   key={idx}
                   type="button"
+                  onClick={() => {
+                    onSelect?.(item);
+                    onOpenChange(false);
+                  }}
                   className="group w-full text-left rounded-xl border border-border bg-card/60 hover:bg-secondary/60 hover:border-primary/40 p-4 transition-smooth hover:-translate-y-0.5 hover:shadow-card-premium"
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -66,7 +91,7 @@ const HistoryDrawer = ({ open, onOpenChange, history = [] }: HistoryDrawerProps)
                       <Clock className="h-3 w-3" />
                       {formattedDate}
                     </div>
-                   <Badge
+                    <Badge
                       variant="outline"
                       className={`text-[10px] font-semibold uppercase tracking-wide ${toneStyles[item.tone || "Standard"]}`}
                     >
@@ -74,20 +99,21 @@ const HistoryDrawer = ({ open, onOpenChange, history = [] }: HistoryDrawerProps)
                     </Badge>
                   </div>
                   <p className="text-sm text-foreground/85 line-clamp-2 leading-relaxed group-hover:text-foreground transition-colors">
-                    {/* BİZİM GERÇEK VERİTABANI KABLOMUZ */}
                     {item.original_text}
                   </p>
                 </button>
               );
             })
           )}
-
-          <div className="pt-4 text-center">
-            <p className="text-[11px] text-muted-foreground/70">
-              Showing your latest corrections
-            </p>
-          </div>
         </div>
+        
+        {isPro && !loading && (
+          <div className="p-4 border-t border-border/50 bg-secondary/20">
+             <p className="text-[11px] text-center text-muted-foreground/70 italic">
+                Showing your latest premium history
+             </p>
+          </div>
+        )}
       </SheetContent>
     </Sheet>
   );

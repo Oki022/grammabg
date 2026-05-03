@@ -184,7 +184,6 @@ type Tone = "Standard" | "Formal" | "Friendly" | "Academic";
 const TONES: Tone[] = ["Standard", "Formal", "Friendly", "Academic"];
 
 const Editor = () => {
- const { user } = useAuth();
   const navigate = useNavigate();
 
   // 1. STATE TANIMLARI
@@ -209,21 +208,32 @@ const Editor = () => {
   const [fileName, setFileName] = useState<string>("");
 const [corrections, setCorrections] = useState<any[]>([]);
 
-  const FREE_LIMIT = 5;
-  const isPro = true; // Şimdilik uygulamanın senin Free planda olduğunu anlaması için bunu false yapıp kaydet (CTRL+S).
-
-  // 2. REFERANSLAR
+// 1. REFLER (Hata veren kısımları buraya geri ekledik)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
+  // 2. LİMİTLER VE PLAN KONTROLÜ
+  const FREE_LIMIT = 5;
+  // user objesinin useAuth'tan geldiğinden emin ol kanka
+  const { user, isPro } = useAuth();
+  console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
+
   // 3. HESAPLAMALAR
-  const limitReached = !!user && count >= FREE_LIMIT;
-  const remaining = Math.max(0, FREE_LIMIT - count);
+  const limitReached = !isPro && !!user && count >= FREE_LIMIT;
+  const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
   const hasInput = !!inputText.trim();
   const canDownload = !!docx || !!correctedXml;
 
-  const buttonLabel = isChecking ? "Checking..." : !user ? "Fix My Text" : limitReached ? "Upgrade to Pro" : loading ? "Fixing..." : `Fix Text (${remaining}/${FREE_LIMIT})`;
+  const buttonLabel = isChecking
+    ? "Checking..."
+    : !user
+      ? "Fix My Text"
+      : limitReached
+        ? "Upgrade to Pro"
+        : loading
+          ? "Fixing..."
+          : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
 
   // 4. ANA MOTOR (handleFix) - Krediyi de düşürür
   // 4. ANA MOTOR (SUPABASE EDGE FUNCTION İLE GÜVENLİ BAĞLANTI)
@@ -266,6 +276,17 @@ const [corrections, setCorrections] = useState<any[]>([]);
             // Mevcut olan satırın altına şunları ekle veya böyle güncelle:
            setCorrectedFileBase64(data.fileResult); // Dosyayı rafa koy
            setCorrections(data.corrections || []);
+           // History kaydet (sadece Pro)
+           if (user && isPro && data.result) {
+           console.log("History kaydediliyor...", user.id, isPro);
+           const { error: histError } = await supabase.from('history' as any).insert({
+           user_id: user.id,
+           original_text: inputText,
+           fixed_text: data.result,
+           tone: tone,
+           });
+           console.log("Sonuç:", histError ? "HATA: " + histError.message : "BAŞARILI");
+           }
            setOutputText(
            (data.result || "")
            .replace(/\r\n/g, "\n")
@@ -302,6 +323,17 @@ const [corrections, setCorrections] = useState<any[]>([]);
       .trim()
       );
         setCorrections(data.corrections || []);
+        // History kaydet (sadece Pro)
+        if (user && isPro && data.result) {
+          console.log("History kaydediliyor...", user.id, isPro);
+          const { error: histError } = await supabase.from('history' as any).insert({
+            user_id: user.id,
+            original_text: inputText,
+            fixed_text: data.result,
+            tone: tone,
+          });
+          console.log("Sonuç:", histError ? "HATA: " + histError.message : "BAŞARILI");
+        }
         toast.success("Text successfully polished in the selected tone!");
         setLoading(false);
       }
@@ -324,8 +356,14 @@ const [corrections, setCorrections] = useState<any[]>([]);
   };
   // 5. YARDIMCI FONKSİYONLAR (Temizle, Kopyala, Dinle, Git)
   const handleClear = () => {
-    setInputText(""); setOutputText(""); setDocx(null);
+    setInputText(""); 
+    setOutputText(""); 
+    setDocx(null);
+    setCorrectedFileBase64(null);
+    setFileName("");
+    setCorrections([]);
     if (docxInputRef.current) docxInputRef.current.value = "";
+    if (pdfInputRef.current) pdfInputRef.current.value = "";
     toast.success("Cleared");
   };
 
@@ -340,12 +378,38 @@ const [corrections, setCorrections] = useState<any[]>([]);
       setSpeaking(false); 
     } else {
       const utt = new SpeechSynthesisUtterance(outputText);
-      utt.lang = "bg-BG"; // Bulgarca
-      utt.rate = 0.9;     // Biraz yavaş — daha anlaşılır
-      utt.pitch = 1.0;
+      utt.lang = "bg-BG"; // Dilimiz Bulgarca
+
+      // 1. Tarayıcıdaki tüm sesleri çekiyoruz
+      const voices = window.speechSynthesis.getVoices();
+
+      // 2. Sadece Bulgarca olan sesleri filtreliyoruz
+      const bgVoices = voices.filter(voice => voice.lang.includes('bg'));
+
+      // 3. Varsa Google'ın veya Apple'ın kaliteli (Premium) sesini arıyoruz
+      let bestVoice = bgVoices.find(voice => 
+        voice.name.includes('Google') || 
+        voice.name.includes('Premium')
+      );
+
+      // 4. Eğer Premium ses bulamadıysa, eldeki ilk Bulgarca sesi alıyor
+      if (!bestVoice && bgVoices.length > 0) {
+        bestVoice = bgVoices[0];
+      }
+
+      // Seçilen kaliteli sesi atıyoruz
+      if (bestVoice) {
+        utt.voice = bestVoice;
+      }
+
+      // Sihirli Dokunuşlar
+      utt.rate = 0.9;     // Senin yaptığın gibi yavaş bıraktık, çok iyi.
+      utt.pitch = 0.85;   // 1.0 yerine 0.85 yaptık ki o ince robot cızırtısı gitsin, daha tok ve insansı çıksın.
       utt.volume = 1.0;
+
       utt.onend = () => setSpeaking(false);
       utt.onerror = () => setSpeaking(false);
+      
       setSpeaking(true);
       window.speechSynthesis.speak(utt);
     }
@@ -459,8 +523,7 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
   };
 
   // KÖPRÜLER
-  const setHistoryModalOpen = setHistoryDrawerOpen;
-  const historyModalOpen = historyDrawerOpen;
+const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
 
   useEffect(() => {
@@ -580,11 +643,20 @@ const handleDownloadPdf = async () => {
           {/* HISTORY (premium feature, locked on Free) */}
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
+              console.log("History'e tıklandı, isPro durumu:", isPro); // Bunu ekle!
               if (isPro) {
-                setHistoryDrawerOpen(true);
-                return;
-              }
+             // History verilerini çek
+             const { data: historyData } = await supabase
+            .from('history' as any)
+            .select('*')
+            .eq('user_id', user!.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+            if (historyData) setHistory(historyData);
+            setHistoryDrawerOpen(true);
+            return;
+          }
               setHistoryModalOpen(true);
             }}
             aria-label={isPro ? "Open history" : "History — Pro feature"}
@@ -899,7 +971,16 @@ const handleDownloadPdf = async () => {
       </div>
 
       {/* Pro: History slide-out drawer */}
-      <HistoryDrawer open={historyDrawerOpen} onOpenChange={setHistoryDrawerOpen} history={history} />
+      <HistoryDrawer 
+      open={historyDrawerOpen} 
+      onOpenChange={setHistoryDrawerOpen} 
+      history={history}
+      onSelect={(item) => {
+      setInputText(item.original_text);
+      setOutputText(item.fixed_text);
+      setTone(item.tone || "Standard");
+      }}
+      />
 
       {/* Premium-feature modal for History */}
       <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>

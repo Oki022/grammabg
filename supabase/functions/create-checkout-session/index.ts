@@ -16,14 +16,19 @@ serve(async (req: Request) => {
   }
 
   try {
+    // userId bazen frontend'den gelmeyebilir, hata almamak için kontrol ekledik
     const { priceId, userId } = await req.json()
+    
+    // Origin'i alıyoruz ama garanti olması için bir fallback (yedek) ekliyoruz
+    const origin = req.headers.get('origin') || 'https://grammabg.com'
 
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/profile?success=true`,
-      cancel_url: `${req.headers.get('origin')}/pricing?canceled=true`,
-      client_reference_id: userId, // Webhook'un seni tanıması için bu şart!
+      // Yönlendirmeleri ana dizine (/) çekiyoruz ki SPA router'ın 404 vermesin
+      success_url: `${origin}/?success=true`,
+      cancel_url: `${origin}/?canceled=true`,
+      client_reference_id: userId,
     })
 
     return new Response(JSON.stringify({ url: session.url }), {

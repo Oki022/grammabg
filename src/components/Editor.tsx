@@ -682,7 +682,7 @@ const handleDownloadPdf = async () => {
               (active
                 ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
                 : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-              "shrink-0 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
+              "shrink-0 sm:flex-1 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
             }
           >
             {t}

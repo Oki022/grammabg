@@ -667,7 +667,7 @@ const handleDownloadPdf = async () => {
 
   {/* TONE SELECTOR - flex-1 ile kalan tüm alanı kaplar */}
   <div className="flex-1 flex items-center gap-1 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur overflow-hidden">
-    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 pr-1">
+    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
       Tone
     </span>
     {/* Mobil: overflow-x-auto scroll | Desktop: grid 4 kolon */}

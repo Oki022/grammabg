@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import * as mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
+import jsPDF from "jspdf";
 import HistoryDrawer from "@/components/HistoryDrawer";
 
 import { 
@@ -42,14 +43,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// BÜTÜN IMPORTLAR BİTTİ. ŞİMDİ AYARLARI YAPIYORUZ:
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 const FREE_LIMIT = 5;
 
-// Match each <w:t ...>...</w:t> occurrence (including empty self-closing? we ignore empty)
 const W_T_REGEX = /<w:t(\s[^>]*)?>([\s\S]*?)<\/w:t>/g;
-// Paragraph boundary marker we use to keep line-structure for the AI
 const PARA_BREAK = "\n";
 
 const decodeXml = (s: string) =>
@@ -73,17 +71,12 @@ interface DocxState {
 }
 
 interface RunSlot {
-  // Decoded text content of one <w:t>
   text: string;
-  // Index into paragraph it belongs to
   paraIndex: number;
 }
 
-// Extract <w:t> contents grouped by paragraph (<w:p>...</w:p>)
 const extractRuns = (xml: string): { slots: RunSlot[]; plain: string } => {
   const slots: RunSlot[] = [];
-  // Split by paragraph boundaries to assign paraIndex
-  // Find all <w:p ...>...</w:p> ranges
   const paraRegex = /<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g;
   let paraMatch: RegExpExecArray | null;
   let paraIndex = 0;
@@ -107,11 +100,8 @@ const extractRuns = (xml: string): { slots: RunSlot[]; plain: string } => {
   return { slots, plain };
 };
 
-// Given original slots and corrected plain text (paragraphs separated by \n),
-// redistribute corrected text back into slots proportionally by original length per paragraph.
 const redistribute = (slots: RunSlot[], corrected: string): string[] => {
   const correctedParas = corrected.split(/\r?\n/);
-  // Group slot indices by paragraph
   const byPara = new Map<number, number[]>();
   slots.forEach((s, i) => {
     const arr = byPara.get(s.paraIndex) ?? [];
@@ -119,7 +109,7 @@ const redistribute = (slots: RunSlot[], corrected: string): string[] => {
     byPara.set(s.paraIndex, arr);
   });
 
-  const result = slots.map((s) => s.text); // default = original
+  const result = slots.map((s) => s.text);
 
   for (const [pIdx, indices] of byPara) {
     const correctedPara = correctedParas[pIdx] ?? "";
@@ -131,12 +121,10 @@ const redistribute = (slots: RunSlot[], corrected: string): string[] => {
       continue;
     }
     if (totalOriginal === 0) {
-      // Put everything in last slot
       result[indices[indices.length - 1]] = correctedPara;
       continue;
     }
 
-    // Proportional split, but try to break on whitespace for cleaner cuts
     let cursor = 0;
     const correctedLen = correctedPara.length;
     for (let k = 0; k < indices.length; k++) {
@@ -148,7 +136,6 @@ const redistribute = (slots: RunSlot[], corrected: string): string[] => {
         let target = cursor + Math.round(proportion * correctedLen);
         if (target < cursor) target = cursor;
         if (target > correctedLen) target = correctedLen;
-        // Snap to nearest whitespace within +/- 15 chars for cleaner break
         const window = 15;
         let snap = target;
         for (let d = 0; d <= window; d++) {
@@ -169,12 +156,10 @@ const redistribute = (slots: RunSlot[], corrected: string): string[] => {
   return result;
 };
 
-// Replace <w:t> contents in the original XML with new texts (in order).
 const replaceRuns = (xml: string, newTexts: string[]): string => {
   let i = 0;
   return xml.replace(W_T_REGEX, (_match, attrs: string | undefined) => {
     const txt = newTexts[i++] ?? "";
-    // Always preserve whitespace to avoid Word collapsing spaces
     const attrStr = attrs && /xml:space=/.test(attrs) ? attrs : `${attrs ?? ""} xml:space="preserve"`;
     return `<w:t${attrStr}>${encodeXml(txt)}</w:t>`;
   });
@@ -186,7 +171,7 @@ const TONES: Tone[] = ["Standard", "Formal", "Friendly", "Academic"];
 const Editor = () => {
   const navigate = useNavigate();
 
-  // 1. STATE TANIMLARI
+  // STATE TANIMLARI
   const [inputText, setInputText] = useState("");
   const [outputText, setOutputText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -197,7 +182,6 @@ const Editor = () => {
   const [tone, setTone] = useState<Tone>("Standard");
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  // 1 Kere bedava Word hakkı kullanıldı mı? Tarayıcı hafızasından kontrol et
   const [freeWordUsed, setFreeWordUsed] = useState(() => localStorage.getItem("freeWordUsed") === "true");
   const [wordModalOpen, setWordModalOpen] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -207,20 +191,22 @@ const Editor = () => {
   const [correctedXml, setCorrectedXml] = useState(null);
   const [correctedFileBase64, setCorrectedFileBase64] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>("");
-const [corrections, setCorrections] = useState<any[]>([]);
+  const [corrections, setCorrections] = useState<any[]>([]);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
-// 1. REFLER (Hata veren kısımları buraya geri ekledik)
+  // ── YENİ STATE'LER ──
+  const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [buyingCredits, setBuyingCredits] = useState(false);
+
+  // REFLER
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
-  // 2. LİMİTLER VE PLAN KONTROLÜ
-  const FREE_LIMIT = 5;
-  // user objesinin useAuth'tan geldiğinden emin ol kanka
   const { user, isPro } = useAuth();
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
-  // 3. HESAPLAMALAR
+  // HESAPLAMALAR
   const limitReached = !isPro && !!user && count >= FREE_LIMIT;
   const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
   const hasInput = !!inputText.trim();
@@ -236,21 +222,20 @@ const [corrections, setCorrections] = useState<any[]>([]);
           ? "Fixing..."
           : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
 
-  // 4. ANA MOTOR (handleFix) - Krediyi de düşürür
-  // 4. ANA MOTOR (SUPABASE EDGE FUNCTION İLE GÜVENLİ BAĞLANTI)
-  // 4. ANA MOTOR (SUPABASE EDGE FUNCTION İLE GÜVENLİ BAĞLANTI)
- // 4. ANA MOTOR (PREMIUM XML MİMARİSİ)
-// --- ANA MOTOR (PREMIUM CIMBIZ MİMARİSİ + DEDEKTİF) ---
-// --- 1. CIMBIZ YARDIMCI FONKSİYONLARI (İşte eksik olanlar bunlar!) ---
- // --- 1. PRO PARAGRAF YARDIMCILARI VE ZIRH ---
-// --- 1. HİBRİT XML CIMBIZLARI (Hem paragraf hem font korur) ---
-  // --- 1. GÜVENLİ KAPSÜL VE ZIRH (Belgeyi Asla Çökertmez) ---
-  // --- 1. KUSURSUZ XML CERRAH MİMARİSİ (DOM Parser - Asla Çökmez) ---
+  // ── YENİ: payment=success URL kontrolü ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      toast.success('🎉 20 PDF credits added to your account!', { duration: 5000 });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  // ANA MOTOR
   const handleFix = async () => {
     const currentWordFile = docxInputRef.current?.files?.[0];
     if ((!currentWordFile && !inputText) || loading || limitReached) return;
     
-    // Giriş yapılmamışsa login'e yönlendir
     if (!user) {
       navigate("/login");
       return;
@@ -259,77 +244,107 @@ const [corrections, setCorrections] = useState<any[]>([]);
     setLoading(true);
     
     try {
-      // 1. EĞER WORD DOSYASI YÜKLENDİYSE (DeepL Devreye Girer)
       if (currentWordFile) {
         const reader = new FileReader();
         reader.readAsDataURL(currentWordFile);
         reader.onload = async () => {
           try {
-            // 1. Dosyayı paketle
             const base64 = (reader.result as string).split(',')[1];
 
-            // 2. Arka plana (Supabase) gönder
             const { data, error } = await supabase.functions.invoke('fix-text', {
               body: { fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true }
             });
 
-            // 3. Hata varsa burada yakala
-            if (error) throw error;
-            if (data && data.error) throw new Error(data.error);
+            // ── YENİ: Limit hata kontrolü ──
+            if (error) {
+              if (data?.limitReason) {
+                if (data.limitReason === 'pdf_limit_buy_more') {
+                  setCreditModalOpen(true);
+                } else {
+                  toast.error(data.error || 'Limit reached.');
+                }
+                setLoading(false);
+                return;
+              }
+              throw error;
+            }
+            if (data && data.error) {
+              if (data.limitReason === 'pdf_limit_buy_more') {
+                setCreditModalOpen(true);
+                setLoading(false);
+                return;
+              }
+              throw new Error(data.error);
+            }
 
-            // 4. Başarılıysa dosyayı hazırla
             console.log("ARKADAN GELEN PAKET:", data);
-            // Mevcut olan satırın altına şunları ekle veya böyle güncelle:
-           setCorrectedFileBase64(data.fileResult); // Dosyayı rafa koy
-           setCorrections(data.corrections || []);
-           // History kaydet (sadece Pro)
-           if (user && isPro && data.result) {
-           console.log("History kaydediliyor...", user.id, isPro);
-           const { error: histError } = await supabase.from('history' as any).insert({
-           user_id: user.id,
-           original_text: inputText,
-           fixed_text: data.result,
-           tone: tone,
-           });
-           console.log("Sonuç:", histError ? "HATA: " + histError.message : "BAŞARILI");
-           }
-           setOutputText(
-           (data.result || "")
-           .replace(/\r\n/g, "\n")
-           .replace(/([.!?])\s{2,}/g, "$1\n\n")
-           .replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2")
-           .trim()
-          );
-           setFileName(data.fileName);
+            setCorrectedFileBase64(data.fileResult);
+            setCorrections(data.corrections || []);
+
+            if (user && isPro && data.result) {
+              console.log("History kaydediliyor...", user.id, isPro);
+              const { error: histError } = await supabase.from('history' as any).insert({
+                user_id: user.id,
+                original_text: inputText,
+                fixed_text: data.result,
+                tone: tone,
+              });
+              console.log("Sonuç:", histError ? "HATA: " + histError.message : "BAŞARILI");
+            }
+
+            setOutputText(
+              (data.result || "")
+              .replace(/\r\n/g, "\n")
+              .replace(/([.!?])\s{2,}/g, "$1\n\n")
+              .replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2")
+              .trim()
+            );
+            setFileName(data.fileName);
             toast.success("The Word file has been translated flawlessly, both in terms of colors and structure!");
             setLoading(false);
 
           } catch (err: any) {
-            // 5. BİR BOK OLMAZSA BURASI ÇALIŞIR VE NEDENİNİ SÖYLER
             console.error("TRANSLATION ERROR DETAIL:", err);
             toast.error(err.message || "An error occurred during translation.");
             setLoading(false);
           }
         };
-      } 
-      // 2. EĞER SADECE KUTUYA YAZI YAZILDIYSA (OpenAI Devreye Girer)
-      else {
+      } else {
         const { data, error } = await supabase.functions.invoke('fix-text', {
           body: { text: inputText, tone: tone, isFile: false }
         });
-        
-        if (error) throw error;
-        if (data && data.error) throw new Error(data.error);
-        
-      setOutputText(
-      (data.result || "")
-      .replace(/\r\n/g, "\n")
-      .replace(/([.!?])\s{2,}/g, "$1\n\n")
-      .replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2")
-      .trim()
-      );
+
+        // ── YENİ: Limit hata kontrolü ──
+        if (error) {
+          if (data?.limitReason) {
+            if (data.limitReason === 'pdf_limit_buy_more') {
+              setCreditModalOpen(true);
+            } else {
+              toast.error(data.error || 'Limit reached.');
+            }
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
+        if (data && data.error) {
+          if (data.limitReason === 'pdf_limit_buy_more') {
+            setCreditModalOpen(true);
+            setLoading(false);
+            return;
+          }
+          throw new Error(data.error);
+        }
+
+        setOutputText(
+          (data.result || "")
+          .replace(/\r\n/g, "\n")
+          .replace(/([.!?])\s{2,}/g, "$1\n\n")
+          .replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2")
+          .trim()
+        );
         setCorrections(data.corrections || []);
-        // History kaydet (sadece Pro)
+
         if (user && isPro && data.result) {
           console.log("History kaydediliyor...", user.id, isPro);
           const { error: histError } = await supabase.from('history' as any).insert({
@@ -340,19 +355,12 @@ const [corrections, setCorrections] = useState<any[]>([]);
           });
           console.log("Sonuç:", histError ? "HATA: " + histError.message : "BAŞARILI");
         }
+
         toast.success("Text successfully polished in the selected tone!");
         setLoading(false);
       }
-      
-      // 3. KREDİ DÜŞÜRME
-      if (user) {
-        const { data: currentData }: any = await supabase.from('user_credits' as any).select('credits').eq('user_id', user.id).single();
-        if (currentData && currentData.credits > 0) {
-          const newCredits = currentData.credits - 1;
-          await supabase.from('user_credits' as any).update({ credits: newCredits }).eq('user_id', user.id);
-          setCount(5 - newCredits);
-        }
-      }
+
+      // KREDİ DÜŞÜRME BLOĞU KALDIRILDI — artık backend yapıyor
 
     } catch (error: any) {
       console.error(error);
@@ -360,7 +368,8 @@ const [corrections, setCorrections] = useState<any[]>([]);
       setLoading(false);
     }
   };
-  // 5. YARDIMCI FONKSİYONLAR (Temizle, Kopyala, Dinle, Git)
+
+  // YARDIMCI FONKSİYONLAR
   const handleClear = () => {
     setPdfLoaded(false);
     setInputText(""); 
@@ -385,38 +394,19 @@ const [corrections, setCorrections] = useState<any[]>([]);
       setSpeaking(false); 
     } else {
       const utt = new SpeechSynthesisUtterance(outputText);
-      utt.lang = "bg-BG"; // Dilimiz Bulgarca
-
-      // 1. Tarayıcıdaki tüm sesleri çekiyoruz
+      utt.lang = "bg-BG";
       const voices = window.speechSynthesis.getVoices();
-
-      // 2. Sadece Bulgarca olan sesleri filtreliyoruz
       const bgVoices = voices.filter(voice => voice.lang.includes('bg'));
-
-      // 3. Varsa Google'ın veya Apple'ın kaliteli (Premium) sesini arıyoruz
       let bestVoice = bgVoices.find(voice => 
-        voice.name.includes('Google') || 
-        voice.name.includes('Premium')
+        voice.name.includes('Google') || voice.name.includes('Premium')
       );
-
-      // 4. Eğer Premium ses bulamadıysa, eldeki ilk Bulgarca sesi alıyor
-      if (!bestVoice && bgVoices.length > 0) {
-        bestVoice = bgVoices[0];
-      }
-
-      // Seçilen kaliteli sesi atıyoruz
-      if (bestVoice) {
-        utt.voice = bestVoice;
-      }
-
-      // Sihirli Dokunuşlar
-      utt.rate = 0.9;     // Senin yaptığın gibi yavaş bıraktık, çok iyi.
-      utt.pitch = 0.85;   // 1.0 yerine 0.85 yaptık ki o ince robot cızırtısı gitsin, daha tok ve insansı çıksın.
+      if (!bestVoice && bgVoices.length > 0) bestVoice = bgVoices[0];
+      if (bestVoice) utt.voice = bestVoice;
+      utt.rate = 0.9;
+      utt.pitch = 0.85;
       utt.volume = 1.0;
-
       utt.onend = () => setSpeaking(false);
       utt.onerror = () => setSpeaking(false);
-      
       setSpeaking(true);
       window.speechSynthesis.speak(utt);
     }
@@ -431,25 +421,26 @@ const [corrections, setCorrections] = useState<any[]>([]);
     element.click();
   };
 
-  // 6. DOSYA İŞLEMLERİ (Buton isimleriyle tam uyumlu)
+  // DOSYA İŞLEMLERİ
   const handleDocxClick = () => docxInputRef.current?.click();
   const handlePdfClick = () => {
-  if (!isPro) {
-    setPdfModalOpen(true);
-    return;
-  }
-  pdfInputRef.current?.click();
-};
+    if (!isPro) {
+      setPdfModalOpen(true);
+      return;
+    }
+    pdfInputRef.current?.click();
+  };
+
   const handleUploadClick = (e: React.MouseEvent) => {
     if (!isPro && freeWordUsed) {
       e.preventDefault();
-      setWordModalOpen(true); // Pro ekranını açar
+      setWordModalOpen(true);
       return;
     }
-    handleDocxClick(); // Sorun yoksa dosyayı seçtirir
+    handleDocxClick();
   };
 
-const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -458,20 +449,15 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     reader.onload = async (e) => {
       try {
         const arrayBuffer = e.target?.result as ArrayBuffer;
-
-        // 1. Ekran için düz metni alıyoruz
         const res = await mammoth.extractRawText({ arrayBuffer });
         setInputText(res.value);
-
-        // 2. Formatı korumak için JSZip ile Word'ün kalbine (XML) giriyoruz
         const zip = new JSZip();
         const loadedZip = await zip.loadAsync(arrayBuffer);
         const xmlContent = await loadedZip.file("word/document.xml")?.async("string");
 
         if (xmlContent) {
-          // Kodun üstündeki motoru çalıştırıp renk/font yuvalarını buluyoruz
           const { slots } = extractRuns(xmlContent);
-          setOriginalSlots(slots); // Yuvaları hafızaya al
+          setOriginalSlots(slots);
           setDocx({ zip: loadedZip, documentXml: xmlContent, fileName: file.name.replace(".docx", "") });
         } else {
           setDocx({ fileName: file.name.replace(".docx", "") });
@@ -521,19 +507,15 @@ const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         setTone("Standard");
         setPdfLoaded(true);
         toast.success("PDF loaded!");
-        
       } catch (err: any) { 
-  console.error("PDF Mistake:", err);
-  toast.error("PDF error: " + err?.message); 
-      } 
-      finally { setUploading(false); }
+        console.error("PDF Mistake:", err);
+        toast.error("PDF error: " + err?.message); 
+      } finally { 
+        setUploading(false); 
+      }
     };
     reader.readAsArrayBuffer(file);
   };
-
-  // KÖPRÜLER
-const [historyModalOpen, setHistoryModalOpen] = useState(false);
-
 
   useEffect(() => {
     if (user) {
@@ -545,102 +527,93 @@ const [historyModalOpen, setHistoryModalOpen] = useState(false);
       fetchCredits();
     } else { setIsChecking(false); }
   }, [user]);
-const handleDownloadWord = async () => {
-  // Kontrolü en standart isimle yapıyoruz
-  if (!correctedFileBase64) {
-    toast.error("Document is not ready yet. Please click 'Fix' first.");
-    return;
-  }
 
-  try {
-    const byteCharacters = atob(correctedFileBase64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    
-    // Değişken ismini en temiz haliyle kullanıyoruz
-    link.download = fileName || "corrected_document.docx";
-    link.click();
-    
-    toast.success("Download started...");
-    if (!isPro) {
-      localStorage.setItem("freeWordUsed", "true");
-      setFreeWordUsed(true);
-    }
-  } catch (err) {
-    console.error("Download error:", err);
-    toast.error("An error occurred during the download..");
-  }
-};
-const handleDownloadPdf = async () => {
-  if (!outputText) {
-    toast.error("No corrected text to download.");
-    return;
-  }
-
-  try {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      toast.error("Popup blocked. Please allow popups.");
+  const handleDownloadWord = async () => {
+    if (!correctedFileBase64) {
+      toast.error("Document is not ready yet. Please click 'Fix' first.");
       return;
     }
+    try {
+      const byteCharacters = atob(correctedFileBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName || "corrected_document.docx";
+      link.click();
+      toast.success("Download started...");
+      if (!isPro) {
+        localStorage.setItem("freeWordUsed", "true");
+        setFreeWordUsed(true);
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      toast.error("An error occurred during the download..");
+    }
+  };
 
-    const pdfName = fileName
-      ? `Corrected_${fileName.replace(/\.[^.]+$/, "")}`
-      : "corrected_document";
+  const handleDownloadPdf = async () => {
+    if (!outputText) {
+      toast.error("No corrected text to download.");
+      return;
+    }
+    try {
+      toast.info("Preparing PDF...");
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const fontUrl = "https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNb4j5Ba_2c7A.ttf";
+      const fontResponse = await fetch(fontUrl);
+      if (!fontResponse.ok) throw new Error("Font could not be loaded.");
+      const fontBuffer = await fontResponse.arrayBuffer();
+      const fontBase64 = btoa(
+        new Uint8Array(fontBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+      );
+      doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64);
+      doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+      doc.setFont("NotoSans");
+      doc.setFontSize(11);
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      const maxWidth = pageWidth - margin * 2;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const lineHeight = 7;
+      let y = 25;
+      const lines = outputText.split("\n");
+      for (const line of lines) {
+        if (line.trim() === "") { y += lineHeight * 0.5; continue; }
+        const wrapped = doc.splitTextToSize(line.trim(), maxWidth);
+        for (const wLine of wrapped) {
+          if (y + lineHeight > pageHeight - 15) { doc.addPage(); y = 25; }
+          doc.text(wLine, margin, y);
+          y += lineHeight;
+        }
+      }
+      const safeName = fileName ? fileName.replace(/\.[^.]+$/, "") : "corrected_document";
+      doc.save(`${safeName}.pdf`);
+      toast.success("PDF downloaded!");
+    } catch (err: any) {
+      console.error("PDF error:", err);
+      toast.error("PDF export failed: " + err.message);
+    }
+  };
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>${pdfName}</title>
-          <style>
-            @page {
-              margin: 15mm;
-              size: A4;
-            }
-            @media print {
-              body { -webkit-print-color-adjust: exact; }
-            }
-            * { box-sizing: border-box; }
-            body {
-              font-family: Arial, sans-serif;
-              font-size: 11px;
-              line-height: 1.6;
-              margin: 0;
-              padding: 0;
-              color: #000;
-            }
-            p { margin: 0 0 5px 0; }
-          </style>
-        </head>
-        <body>
-          ${outputText.split("\n").map(line => 
-            line.trim() ? `<p>${line.trim()}</p>` : `<br/>`
-          ).join("\n")}
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(() => window.close(), 1000);
-            };
-          <\/script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-    toast.success("PDF ready — use 'Save as PDF' in the print dialog.");
-  } catch (err) {
-    console.error("PDF error:", err);
-    toast.error("An error occurred during PDF download.");
-  }
-};
+  // ── YENİ: Ekstra kredi satın al ──
+  const handleBuyCredits = async () => {
+    setBuyingCredits(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('buy-credits', {});
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      window.location.href = data.url;
+    } catch (err: any) {
+      console.error('Buy credits error:', err);
+      toast.error('Something went wrong. Please try again.');
+      setBuyingCredits(false);
+    }
+  };
 
   return (
     <section id="editor" className="container py-16 md:py-24">
@@ -655,65 +628,64 @@ const handleDownloadPdf = async () => {
 
       <div className="relative mx-auto max-w-4xl rounded-2xl border border-border bg-gradient-card p-4 md:p-6 shadow-card-premium backdrop-blur">
         {/* TOP ROW: History (left) + Tone (right) */}
-<div className="mb-5 flex items-center gap-2 w-full">
+        <div className="mb-5 flex items-center gap-2 w-full">
 
-  {/* HISTORY BUTTON */}
-  <button
-    type="button"
-    onClick={async () => {
-      if (isPro) {
-        const { data: historyData } = await supabase
-          .from('history' as any)
-          .select('*')
-          .eq('user_id', user!.id)
-          .order('created_at', { ascending: false })
-          .limit(20);
-        if (historyData) setHistory(historyData);
-        setHistoryDrawerOpen(true);
-        return;
-      }
-      setHistoryModalOpen(true);
-    }}
-    aria-label={isPro ? "Open history" : "History — Pro feature"}
-    className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-1 text-muted-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/80 transition-smooth backdrop-blur"
-  >
-    <History className="h-4 w-4" />
-    {!isPro && <Lock className="h-3 w-3" />}
-  </button>
-  
-  {/* TONE SELECTOR ASKIYA ALINDI - BURADAN BAŞLIYOR */}
-  {false && (
-  <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur ml-auto">
-    <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
-      Tone
-    </span>
-    {/* Mobil: overflow-x-auto scroll | Desktop: grid 4 kolon */}
-    <div className="flex sm:grid sm:grid-cols-4 gap-1 w-full overflow-x-auto scrollbar-hide">
-      {TONES.filter(t => (!docx && !pdfLoaded) || t === "Standard").map((t) => {
-        const active = tone === t;
-        return (
+          {/* HISTORY BUTTON */}
           <button
-            key={t}
-            onClick={() => setTone(t)}
-            className={
-              (active
-                ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
-              "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
-            }
+            type="button"
+            onClick={async () => {
+              if (isPro) {
+                const { data: historyData } = await supabase
+                  .from('history' as any)
+                  .select('*')
+                  .eq('user_id', user!.id)
+                  .order('created_at', { ascending: false })
+                  .limit(20);
+                if (historyData) setHistory(historyData);
+                setHistoryDrawerOpen(true);
+                return;
+              }
+              setHistoryModalOpen(true);
+            }}
+            aria-label={isPro ? "Open history" : "History — Pro feature"}
+            className="shrink-0 inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/60 px-2 py-1 text-muted-foreground/70 hover:text-primary hover:border-primary/40 hover:bg-background/80 transition-smooth backdrop-blur"
           >
-            {t}
+            <History className="h-4 w-4" />
+            {!isPro && <Lock className="h-3 w-3" />}
           </button>
-        );
-      })}
-    </div>
-  </div>
-  )}
-  
-</div>
+
+          {/* TONE SELECTOR ASKIYA ALINDI */}
+          {false && (
+            <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-secondary/40 p-1 sm:pl-3 backdrop-blur ml-auto">
+              <span className="hidden sm:inline text-[11px] uppercase tracking-wider text-muted-foreground font-semibold shrink-0 px-2">
+                Tone
+              </span>
+              <div className="flex sm:grid sm:grid-cols-4 gap-1 w-full overflow-x-auto scrollbar-hide">
+                {TONES.filter(t => (!docx && !pdfLoaded) || t === "Standard").map((t) => {
+                  const active = tone === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setTone(t)}
+                      className={
+                        (active
+                          ? "bg-gradient-emerald text-primary-foreground shadow-emerald font-semibold "
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/70 font-medium ") +
+                        "px-2 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs text-center transition-smooth whitespace-nowrap"
+                      }
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+
         {/* INPUT */}
         <div>
-          {/* Toolbar row — sits above the textarea on every breakpoint */}
           <div className="mb-3 flex flex-row flex-wrap items-center justify-end gap-2">
             <button
               onClick={handleUploadClick}
@@ -763,7 +735,6 @@ const handleDownloadPdf = async () => {
             className="hidden"
           />
 
-          {/* Floating label + textarea — mirrors the output structure exactly */}
           <div className="relative">
             <label className="absolute -top-2 left-4 px-2 bg-card text-[11px] uppercase tracking-wider text-muted-foreground font-semibold z-10">
               Your text
@@ -775,7 +746,6 @@ const handleDownloadPdf = async () => {
               className="w-full min-h-[200px] md:min-h-[220px] rounded-xl bg-input/60 border border-border p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-smooth resize-y"
             />
           </div>
-          {/* Word/char count */}
           <div className="mt-2 flex items-center justify-between gap-3 text-xs">
             <div className="text-muted-foreground">
               {docx && (
@@ -803,29 +773,25 @@ const handleDownloadPdf = async () => {
         {/* ACTION */}
         <div className="flex flex-col items-center gap-3 my-5">
           <Button
-  variant="emerald"
-  size="lg"
-  // Sadece gerçekten bir şey yükleniyorsa veya (limit dolmadıysa VE yazı yoksa) kapalı kalsın
-  disabled={loading || (!limitReached && !hasInput)} 
-  onClick={limitReached ? goToPricing : handleFix}
-  className={`min-w-[220px] transition-all duration-300 ${isChecking ? "opacity-70 cursor-wait" : "opacity-100"}`}
->
-  {/* İkonlar sadece kontrol bitince ve durumlarına göre gözüksün */}
-  {!isChecking && !loading && !limitReached && <Wand2 className="mr-2 h-4 w-4" />}
-  {!isChecking && limitReached && <Rocket className="mr-2 h-4 w-4" />}
-  
-  {/* Yazı zaten bizim şelaleden (buttonLabel) geliyor */}
-  {buttonLabel}
-</Button>
+            variant="emerald"
+            size="lg"
+            disabled={loading || (!limitReached && !hasInput)} 
+            onClick={limitReached ? goToPricing : handleFix}
+            className={`min-w-[220px] transition-all duration-300 ${isChecking ? "opacity-70 cursor-wait" : "opacity-100"}`}
+          >
+            {!isChecking && !loading && !limitReached && <Wand2 className="mr-2 h-4 w-4" />}
+            {!isChecking && limitReached && <Rocket className="mr-2 h-4 w-4" />}
+            {buttonLabel}
+          </Button>
 
           <p className="text-xs text-muted-foreground">
             {isChecking
-          ? "Checking credits..."
-          : !user
-          ? "Login to get 5 free daily credits"
-          : limitReached
-          ? "You've used all 5 free checks today."
-          : `${remaining} free check${remaining === 1 ? "" : "s"} left`}
+              ? "Checking credits..."
+              : !user
+              ? "Login to get 5 free daily credits"
+              : limitReached
+              ? "You've used all 5 free checks today."
+              : `${remaining} free check${remaining === 1 ? "" : "s"} left`}
           </p>
         </div>
 
@@ -850,21 +816,18 @@ const handleDownloadPdf = async () => {
             className="w-full min-h-[200px] md:min-h-[220px] rounded-xl bg-input/40 border border-border p-4 pr-20 text-foreground resize-y"
           />
 
-          {/* Output action bar */}
           <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-            {/* LISTEN BUTONU ASKIYA ALINDI */}
             {false && (
-            <button
-              onClick={handleListen}
-              disabled={!outputText}
-              aria-label={speaking ? "Stop reading" : "Listen to corrected text"}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur"
-            >
-              {speaking ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-              {speaking ? "Stop" : "Listen"}
-            </button>
+              <button
+                onClick={handleListen}
+                disabled={!outputText}
+                aria-label={speaking ? "Stop reading" : "Listen to corrected text"}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur"
+              >
+                {speaking ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                {speaking ? "Stop" : "Listen"}
+              </button>
             )}
-             {/* Buradan sonra muhtemelen Kopyala veya Paylaş butonların geliyordur, onlar açık kalsın */}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -902,7 +865,8 @@ const handleDownloadPdf = async () => {
             </DropdownMenu>
           </div>
         </div>
-{/* CORRECTIONS & SUGGESTIONS */}
+
+        {/* CORRECTIONS & SUGGESTIONS */}
         {outputText && (
           <div className="mt-6 rounded-xl border border-border bg-background/50 p-4 md:p-5 backdrop-blur animate-fade-in-up">
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -968,7 +932,6 @@ const handleDownloadPdf = async () => {
             size="lg"
             disabled={!outputText}
             onClick={correctedFileBase64 ? handleDownloadWord : handleDownloadPdf}
-            /* min-w-[260px] sildik, yerine w-full (mobilde tam genişlik) ve sm:w-auto (masaüstünde normal) ekledik */
             className="w-full sm:w-auto px-4 text-sm sm:text-base flex items-center justify-center"
             title={!docx ? "Upload a file to enable download" : ""}
           >
@@ -989,17 +952,17 @@ const handleDownloadPdf = async () => {
 
       {/* Pro: History slide-out drawer */}
       <HistoryDrawer 
-      open={historyDrawerOpen} 
-      onOpenChange={setHistoryDrawerOpen} 
-      history={history}
-      onSelect={(item) => {
-      setInputText(item.original_text);
-      setOutputText(item.fixed_text);
-      setTone(item.tone || "Standard");
-      }}
+        open={historyDrawerOpen} 
+        onOpenChange={setHistoryDrawerOpen} 
+        history={history}
+        onSelect={(item) => {
+          setInputText(item.original_text);
+          setOutputText(item.fixed_text);
+          setTone(item.tone || "Standard");
+        }}
       />
 
-      {/* Premium-feature modal for History */}
+      {/* History modal */}
       <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
         <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
           <DialogHeader>
@@ -1019,10 +982,7 @@ const handleDownloadPdf = async () => {
               variant="emerald"
               size="lg"
               className="w-full"
-              onClick={() => {
-                setHistoryModalOpen(false);
-                goToPricing();
-              }}
+              onClick={() => { setHistoryModalOpen(false); goToPricing(); }}
             >
               <Sparkles className="h-4 w-4" />
               Get Pro Now
@@ -1038,7 +998,7 @@ const handleDownloadPdf = async () => {
         </DialogContent>
       </Dialog>
 
-      {/* Premium-feature modal for PDF Upload */}
+      {/* PDF Pro modal */}
       <Dialog open={pdfModalOpen} onOpenChange={setPdfModalOpen}>
         <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
           <DialogHeader>
@@ -1058,10 +1018,7 @@ const handleDownloadPdf = async () => {
               variant="emerald"
               size="lg"
               className="w-full"
-              onClick={() => {
-                setPdfModalOpen(false);
-                goToPricing();
-              }}
+              onClick={() => { setPdfModalOpen(false); goToPricing(); }}
             >
               <Sparkles className="h-4 w-4" />
               Get Pro Now
@@ -1076,44 +1033,93 @@ const handleDownloadPdf = async () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* WORD PRO MODAL (KAFES) */}
-        <Dialog open={wordModalOpen} onOpenChange={setWordModalOpen}>
-          <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
-            <DialogHeader>
-              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald">
-                <Upload className="h-7 w-7 text-primary-foreground" />
-              </div>
-              <DialogTitle className="text-center font-display text-2xl">
-                Word Upload is a <span className="text-gradient-emerald">Pro Feature</span>
-              </DialogTitle>
-              <DialogDescription className="text-center">
-                You've used your 1 free Word document translation! 
-                Upgrade to Pro to unlock unlimited Word & PDF processing with perfect formatting preserved.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="sm:flex-col sm:space-x-0 gap-2 mt-4">
-              <Button
-                variant="emerald"
-                size="lg"
-                className="w-full"
-                onClick={() => {
-                  setWordModalOpen(false);
-                  goToPricing();
-                }}
-              >
-                <Sparkles className="h-4 w-4 mr-2" />
-                Get Pro Now
-              </Button>
-              <button
-                type="button"
-                onClick={() => setWordModalOpen(false)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-smooth mt-2"
-              >
-                Maybe later
-              </button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
+      {/* Word Pro modal */}
+      <Dialog open={wordModalOpen} onOpenChange={setWordModalOpen}>
+        <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald">
+              <Upload className="h-7 w-7 text-primary-foreground" />
+            </div>
+            <DialogTitle className="text-center font-display text-2xl">
+              Word Upload is a <span className="text-gradient-emerald">Pro Feature</span>
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              You've used your 1 free Word document translation! 
+              Upgrade to Pro to unlock unlimited Word & PDF processing with perfect formatting preserved.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2 mt-4">
+            <Button
+              variant="emerald"
+              size="lg"
+              className="w-full"
+              onClick={() => { setWordModalOpen(false); goToPricing(); }}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Get Pro Now
+            </Button>
+            <button
+              type="button"
+              onClick={() => setWordModalOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-smooth mt-2"
+            >
+              Maybe later
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── YENİ: PDF Limit / Ekstra Kredi modal ── */}
+      <Dialog open={creditModalOpen} onOpenChange={setCreditModalOpen}>
+        <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald">
+              <FileDown className="h-7 w-7 text-primary-foreground" />
+            </div>
+            <DialogTitle className="text-center font-display text-2xl">
+              PDF Limit <span className="text-gradient-emerald">Reached</span>
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              You've used all 15 monthly PDF credits.
+              Get <span className="font-semibold text-foreground">20 extra PDF credits</span> for only{" "}
+              <span className="font-semibold text-foreground">€3.99</span> — no subscription, one-time payment.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            <Button
+              variant="emerald"
+              size="lg"
+              className="w-full"
+              disabled={buyingCredits}
+              onClick={handleBuyCredits}
+            >
+              {buyingCredits ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                  </svg>
+                  Redirecting...
+                </span>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Buy 20 PDF Credits — €3.99
+                </>
+              )}
+            </Button>
+            <button
+              type="button"
+              onClick={() => setCreditModalOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-smooth"
+            >
+              Maybe later
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </section>
   );
 };

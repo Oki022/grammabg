@@ -649,7 +649,7 @@ const handleDownloadPdf = async () => {
           The Editor
         </h2>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          Paste text in ANY language or upload your documents. Watch our AI instantly translate and polish it into flawless Bulgarian, perfectly adapted to your chosen tone.
+          Paste text in ANY language or upload your documents. Watch our AI instantly translate and polish it into flawless Bulgarian perfectly .
         </p>
       </div>
 

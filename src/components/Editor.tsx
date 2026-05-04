@@ -201,12 +201,16 @@ const Editor = () => {
             }
 
             setCorrectedFileBase64(data.fileResult);
-            setCorrections(data.corrections || []);
-            if (user && isPro && data.result) {
-              await supabase.from('history' as any).insert({
-                user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-              });
-            }
+            setCorrections(
+           (data.corrections || []).filter(
+           (c: any) => c.original?.trim() !== c.corrected?.trim()
+           )
+           );
+           if (user && isPro && data.result) {
+           await supabase.from('history' as any).insert({
+           user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+           });
+           }
             setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2").trim());
             setFileName(data.fileName);
             toast.success("The Word file has been translated flawlessly!");
@@ -237,12 +241,16 @@ const Editor = () => {
         }
 
         setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2").trim());
-        setCorrections(data.corrections || []);
-        if (user && isPro && data.result) {
-          await supabase.from('history' as any).insert({
-            user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-          });
-        }
+        setCorrections(
+       (data.corrections || []).filter(
+       (c: any) => c.original?.trim() !== c.corrected?.trim()
+      )
+      );
+      if (user && isPro && data.result) {
+      await supabase.from('history' as any).insert({
+      user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+       });
+       }
         toast.success("Text successfully polished!");
         setLoading(false);
       }

@@ -11,6 +11,12 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
+// Price ID'ler
+const PRICE_IDS = {
+  extra_pdf_credits:  'price_1TTRYrH7gfnEgeld2OyR4k5i',
+  extra_text_credits: 'price_1TTSTeH7gfnEgeld1WrL7g4F',
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -20,14 +26,17 @@ serve(async (req: Request) => {
       Deno.env.get('SERVICE_ROLE_KEY')!
     );
 
-    // Kullanıcıyı JWT'den al
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Unauthorized');
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    // Stripe customer ID'yi profiles'tan al
+    // type: 'extra_pdf_credits' | 'extra_text_credits'
+    const { type } = await req.json();
+    const priceId = PRICE_IDS[type as keyof typeof PRICE_IDS];
+    if (!priceId) throw new Error('Invalid credit type');
+
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('stripe_customer_id')
@@ -39,13 +48,8 @@ serve(async (req: Request) => {
       customer: profile?.stripe_customer_id || undefined,
       customer_email: profile?.stripe_customer_id ? undefined : user.email,
       client_reference_id: user.id,
-      line_items: [
-        {
-          price: 'price_1TTRYrH7gfnEgeld2OyR4k5i', // Senin price ID'n
-          quantity: 1,
-        },
-      ],
-      success_url: 'https://www.grammabg.com/?payment=success',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `https://www.grammabg.com/?payment=success&type=${type}`,
       cancel_url: 'https://www.grammabg.com/',
     });
 

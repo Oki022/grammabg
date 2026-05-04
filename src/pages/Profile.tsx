@@ -34,6 +34,8 @@ const Profile = () => {
   const [wordCount, setWordCount] = useState<number>(0);
   const [pdfCount, setPdfCount] = useState<number>(0);
   const [extraPdfCredits, setExtraPdfCredits] = useState<number>(0);
+  const [textCount, setTextCount] = useState<number>(0);
+  const [extraTextCredits, setExtraTextCredits] = useState<number>(0);
   const [fetchingCredits, setFetchingCredits] = useState(true);
 
   const meta = (user?.user_metadata as { plan?: string; canceling?: boolean; stripe_subscription_id?: string; stripe_period_end?: string; display_name?: string } | null) ?? null;
@@ -91,7 +93,7 @@ const Profile = () => {
       try {
         const { data } = await (supabase as any)
           .from('user_credits')
-          .select('credits, word_count, pdf_count, extra_pdf_credits')
+          .select('credits, text_count, word_count, pdf_count, extra_text_credits, extra_pdf_credits')
           .eq('user_id', user.id)
           .single();
 
@@ -100,6 +102,8 @@ const Profile = () => {
           if (data.word_count !== undefined) setWordCount(data.word_count);
           if (data.pdf_count !== undefined) setPdfCount(data.pdf_count);
           if (data.extra_pdf_credits !== undefined) setExtraPdfCredits(data.extra_pdf_credits);
+          if (data.text_count !== undefined) setTextCount(data.text_count);
+          if (data.extra_text_credits !== undefined) setExtraTextCredits(data.extra_text_credits);
         }
       } catch (err) {
         console.error("Credits fetch error:", err);
@@ -212,16 +216,27 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Pro — text sınırsız */}
+            {/* Pro — text aylık 300 */}
             {isPro && (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Gauge className="h-4 w-4 text-primary" />
                     Text Corrections
                   </div>
-                  <span className="text-xs text-emerald-500 font-semibold">Unlimited</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {textCount}/300 used
+                  </span>
                 </div>
+                <Progress value={(textCount / 300) * 100} className="h-1.5" />
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {300 - textCount > 0 ? `${300 - textCount} remaining this month` : "Monthly limit reached"}
+                </p>
+                {extraTextCredits > 0 && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                    +{extraTextCredits} extra credits available
+                  </div>
+                )}
               </div>
             )}
 

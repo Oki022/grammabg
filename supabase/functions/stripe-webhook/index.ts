@@ -6,9 +6,8 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
-// Stripe Dashboard'da ürününü tanımlarken bu metadata'yı ekle:
-// extra_pdf_credits = "20"  (kaç kredi eklenecek)
-const EXTRA_PDF_CREDITS_PER_PACK = 20;
+const EXTRA_PDF_CREDITS_PER_PACK  = 20;
+const EXTRA_TEXT_CREDITS_PER_PACK = 100;
 
 serve(async (req: Request) => {
   const signature = req.headers.get('stripe-signature');
@@ -16,8 +15,7 @@ serve(async (req: Request) => {
   try {
     const body = await req.text();
     const event = stripe.webhooks.constructEvent(
-      body,
-      signature!,
+      body, signature!,
       Deno.env.get('STRIPE_WEBHOOK_SECRET')!
     );
 
@@ -26,22 +24,18 @@ serve(async (req: Request) => {
       Deno.env.get('SERVICE_ROLE_KEY') || ''
     );
 
-    // ════════════════════════════════════════════════════════
-    // 1. ÖDEME TAMAMLANDI — checkout.session.completed
-    //    a) Abonelik başlatma (Pro plan)
-    //    b) Tek seferlik ekstra kredi paketi satın alma
-    // ════════════════════════════════════════════════════════
+    // ── 1. checkout.session.completed ──
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
       const userId = session.client_reference_id;
-      const mode = session.mode; // 'subscription' | 'payment'
+      const mode = session.mode;
 
       if (!userId) {
-        console.error('checkout.session.completed: client_reference_id missing');
+        console.error('client_reference_id missing');
         return new Response(JSON.stringify({ received: true }), { status: 200 });
       }
 
-      // ── a) ABONELİK (Pro plan aktivasyonu) ──
+      // Abonelik
       if (mode === 'subscription') {
         const subscriptionId = session.subscription;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -63,65 +57,50 @@ serve(async (req: Request) => {
           email: session.customer_details?.email,
         });
 
-        console.log(`Pro plan activated for user ${userId}`);
+        console.log(`Pro activated for ${userId}`);
       }
 
-      // ── b) TEK SEFERLİK ÖDEME (Ekstra PDF kredisi paketi) ──
+      // Tek seferlik ödeme (ekstra kredi)
       if (mode === 'payment') {
-        // Stripe'ta ürün/fiyat metadata'sına bak
-        // Dashboard'da Price metadata: { "type": "extra_pdf_credits" } ekle
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-        const isExtraPdfPack = lineItems.data.some((item: any) => {
+
+        for (const item of lineItems.data) {
           const meta = item.price?.metadata ?? {};
-          return meta.type === 'extra_pdf_credits';
-        });
 
-        if (isExtraPdfPack) {
-          const { error } = await supabaseAdmin
-            .from('user_credits')
-            .update({
-              extra_pdf_credits: supabaseAdmin.rpc('increment_extra_credits', {
-                p_user_id: userId,
-                p_amount: EXTRA_PDF_CREDITS_PER_PACK,
-              })
-            })
-            .eq('user_id', userId);
+          if (meta.type === 'extra_pdf_credits') {
+            await supabaseAdmin.rpc('add_extra_pdf_credits', {
+              p_user_id: userId,
+              p_amount: EXTRA_PDF_CREDITS_PER_PACK,
+            });
+            console.log(`Added ${EXTRA_PDF_CREDITS_PER_PACK} PDF credits to ${userId}`);
+          }
 
-          // RPC kullanmak daha güvenli — ayrı bir SQL fonksiyonu
-          await supabaseAdmin.rpc('add_extra_pdf_credits', {
-            p_user_id: userId,
-            p_amount: EXTRA_PDF_CREDITS_PER_PACK,
-          });
-
-          console.log(`Added ${EXTRA_PDF_CREDITS_PER_PACK} extra PDF credits to user ${userId}`);
+          if (meta.type === 'extra_text_credits') {
+            await supabaseAdmin.rpc('add_extra_text_credits', {
+              p_user_id: userId,
+              p_amount: EXTRA_TEXT_CREDITS_PER_PACK,
+            });
+            console.log(`Added ${EXTRA_TEXT_CREDITS_PER_PACK} text credits to ${userId}`);
+          }
         }
       }
     }
 
-    // ════════════════════════════════════════════════════════
-    // 2. AYLIK YENİLEME — invoice.payment_succeeded
-    //    word_count ve pdf_count sıfırla (extra_pdf_credits'e DOKUNMA)
-    // ════════════════════════════════════════════════════════
+    // ── 2. invoice.payment_succeeded (aylık yenileme) ──
     if (event.type === 'invoice.payment_succeeded') {
       const invoice = event.data.object as any;
-
-      // Sadece abonelik yenileme faturalarını işle (ilk ödeme değil)
       if (invoice.billing_reason !== 'subscription_cycle') {
         return new Response(JSON.stringify({ received: true }), { status: 200 });
       }
 
       const customerId = invoice.customer;
-
       const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('stripe_customer_id', customerId)
-        .single();
+        .from('profiles').select('id')
+        .eq('stripe_customer_id', customerId).single();
 
       if (profile?.id) {
         await supabaseAdmin.rpc('reset_monthly_usage', { p_user_id: profile.id });
 
-        // Abonelik bitiş tarihini de güncelle
         const subscriptionId = invoice.subscription;
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -130,24 +109,16 @@ serve(async (req: Request) => {
             user_metadata: { stripe_period_end: newPeriodEnd }
           });
         }
-
-        console.log(`Monthly usage reset for user ${profile.id}`);
+        console.log(`Monthly usage reset for ${profile.id}`);
       }
     }
 
-    // ════════════════════════════════════════════════════════
-    // 3. ABONELİK İPTAL — customer.subscription.deleted
-    //    Dönem bitince Free plana çek
-    // ════════════════════════════════════════════════════════
+    // ── 3. customer.subscription.deleted ──
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as any;
-      const customerId = subscription.customer;
-
       const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('stripe_customer_id', customerId)
-        .single();
+        .from('profiles').select('id')
+        .eq('stripe_customer_id', subscription.customer).single();
 
       if (profile?.id) {
         const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(profile.id);
@@ -161,7 +132,7 @@ serve(async (req: Request) => {
               stripe_period_end: null,
             }
           });
-          console.log(`User ${profile.id} downgraded to Free plan`);
+          console.log(`${profile.id} downgraded to free`);
         }
       }
     }

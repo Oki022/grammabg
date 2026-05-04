@@ -602,16 +602,23 @@ const handleDownloadPdf = async () => {
           <meta charset="UTF-8">
           <title>${pdfName}</title>
           <style>
+            @page {
+              margin: 15mm;
+              size: A4;
+            }
+            @media print {
+              body { -webkit-print-color-adjust: exact; }
+            }
+            * { box-sizing: border-box; }
             body {
               font-family: Arial, sans-serif;
-              font-size: 12px;
+              font-size: 11px;
               line-height: 1.6;
-              margin: 40px;
+              margin: 0;
+              padding: 0;
               color: #000;
             }
-            p { margin: 0 0 6px 0; }
-            word-spacing: 2px;
-          }    
+            p { margin: 0 0 5px 0; }
           </style>
         </head>
         <body>

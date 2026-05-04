@@ -93,12 +93,12 @@ const plans: Plan[] = [
     name: "Pro Plan",
     price: "€5.99",
     period: "/mo",
-    description: "Unlimited power for professionals.",
+    description: "Advanced AI tools with generous monthly quotas.",
     features: [
-      "Full Correction History", // (Tüm geçmişi saklama özelliği varsa en mantıklısı bu)
-      "Advanced Grammar Insights", // (Daha detaylı analiz anlamına gelir)
+      "50 Word (.docx) fixes per month", // (Tüm geçmişi saklama özelliği varsa en mantıklısı bu)
+      "15 PDF exports per month", // (Daha detaylı analiz anlamına gelir)
       "Priority AI Processing", // (Daha hızlı sonuç alma vurgusu)
-      "Unlimited Document History" // (Geçmişe vurgu yapmaya devam etmek için)
+      "Full Correction History" // (Geçmişe vurgu yapmaya devam etmek için)
     ],
     cta: "Start Pro Now",
     highlighted: true,

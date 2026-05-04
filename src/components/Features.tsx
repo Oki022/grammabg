@@ -3,18 +3,18 @@ import { CheckCircle2, Languages, FileText } from "lucide-react";
 const features = [
   {
     icon: CheckCircle2,
-    title: "Smart Grammar Fixes",
-    desc: "Fix errors instantly and enhance your text with advanced AI that ensures perfect clarity and professional flow.",
+    title: "Smart Grammar & Style Fixes",
+    desc: "Go beyond simple typos. Our advanced AI enhances your Bulgarian text for perfect clarity, professional flow, and native-sounding elegance.",
   },
   {
     icon: Languages,
-    title: "Multi-Language to Bulgarian",
-    desc: "Translate text from ANY language into flawless, native-sounding Bulgarian effortlessly.",
+    title: "Any Language to Bulgarian",
+    desc: "Translate and polish text from ANY language into flawless Bulgarian. Ensure your message remains natural and culturally accurate every time.",
   },
   {
     icon: FileText,
-    title: "Smart Document Handling",
-    desc: "Process Word (.docx) files for free. Unlock PDF uploads and cloud-saved History with the Pro plan.",
+    title: "Professional Document Support",
+    desc: "Fix Word (.docx) files while preserving their original layout. Pro users unlock high-quality PDF exports and cloud-saved History for ultimate productivity.",
   },
 ];
 

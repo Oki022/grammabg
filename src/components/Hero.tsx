@@ -24,7 +24,7 @@ const Hero = () => {
         </h1>
 
         <p className="max-w-2xl mx-auto text-base md:text-lg text-slate-600 dark:text-muted-foreground leading-relaxed mb-10 animate-fade-in-up [animation-delay:160ms] opacity-0">
-          Instantly correct your Bulgarian grammar, or translate from ANY language into flawless, native-sounding text. Adjust your tone with a single click and write with absolute confidence.
+          Instantly correct your Bulgarian grammar, or translate from ANY language into flawless, native-sounding text. Adjust with a single click and write with absolute confidence.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-up [animation-delay:240ms] opacity-0">

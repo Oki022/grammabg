@@ -13,7 +13,7 @@ const features = [
   },
   {
     icon: FileText,
-    title: "Professional Document Support",
+    title: "Smart Document Support",
     desc: "Fix Word (.docx) files while preserving their original layout. Pro users unlock high-quality PDF exports and cloud-saved History for ultimate productivity.",
   },
 ];

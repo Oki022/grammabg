@@ -95,6 +95,7 @@ const plans: Plan[] = [
     period: "/mo",
     description: "Advanced AI tools with generous monthly quotas.",
     features: [
+      "200 AI Document Credits per month",
       "50 Word (.docx) fixes per month", // (Tüm geçmişi saklama özelliği varsa en mantıklısı bu)
       "15 PDF exports per month", // (Daha detaylı analiz anlamına gelir)
       "Priority AI Processing", // (Daha hızlı sonuç alma vurgusu)

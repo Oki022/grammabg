@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     q: "Is there a daily limit?",
-    a: "Free users get 5 AI text corrections and 1 Word (.docx) file fix per day, resetting at midnight. For heavy users, our Pro plan offers completely unlimited text corrections, plus a generous monthly quota of 50 Word files and 15 PDF exports. Need more documents processed? You can easily top up with extra credit packages anytime!",
+    a: "Free users get 5 AI text corrections and 1 Word (.docx) file fix per day, resetting at midnight. For heavy users, our Pro plan offers completely 200 text corrections, plus a generous monthly quota of 50 Word files and 15 PDF exports. Need more documents processed? You can easily top up with extra credit packages anytime!",
   },
   {
     q: "Is my text private?",

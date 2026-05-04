@@ -703,7 +703,7 @@ const Editor = () => {
             <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald"><Sparkles className="h-7 w-7 text-primary-foreground" /></div>
             <DialogTitle className="text-center font-display text-2xl">Text Limit <span className="text-gradient-emerald">Reached</span></DialogTitle>
             <DialogDescription className="text-center">
-              You've used all 300 monthly text corrections. Get <span className="font-semibold text-foreground">100 extra text credits</span> for only <span className="font-semibold text-foreground">€1.99</span> — one-time payment.
+              You've used all 200 monthly text corrections. Get <span className="font-semibold text-foreground">100 extra text credits</span> for only <span className="font-semibold text-foreground">€1.99</span> — one-time payment.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">

@@ -225,12 +225,12 @@ const Profile = () => {
                     Text Corrections
                   </div>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {textCount}/300 used
+                    {textCount}/200 used
                   </span>
                 </div>
                 <Progress value={(textCount / 300) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {300 - textCount > 0 ? `${300 - textCount} remaining this month` : "Monthly limit reached"}
+                  {200 - textCount > 0 ? `${200 - textCount} remaining this month` : "Monthly limit reached"}
                 </p>
                 {extraTextCredits > 0 && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">

@@ -311,8 +311,13 @@ const Editor = () => {
         };
       } else {
         const { data, error } = await supabase.functions.invoke('fix-text', {
-          body: { text: inputText, tone: tone, isFile: false }
-        });
+        body: { 
+        text: inputText, 
+        tone: tone, 
+        isFile: pdfLoaded,
+        fileName: pdfLoaded ? 'document.pdf' : undefined
+         }
+       });
 
         // ── YENİ: Limit hata kontrolü ──
         if (error) {

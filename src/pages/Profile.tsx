@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const DAILY_LIMIT = 5;
 const FREE_WORD_DAILY = 1;
+const PRO_TEXT_MONTHLY = 200;
 const PRO_WORD_MONTHLY = 50;
 const PRO_PDF_MONTHLY = 15;
 
@@ -28,18 +29,18 @@ const formatCountdown = () => {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, isPro } = useAuth();
   const [resetIn, setResetIn] = useState(formatCountdown);
   const [remainingCredits, setRemainingCredits] = useState<number>(DAILY_LIMIT);
+  const [textCount, setTextCount] = useState<number>(0);
   const [wordCount, setWordCount] = useState<number>(0);
   const [pdfCount, setPdfCount] = useState<number>(0);
-  const [extraPdfCredits, setExtraPdfCredits] = useState<number>(0);
-  const [textCount, setTextCount] = useState<number>(0);
   const [extraTextCredits, setExtraTextCredits] = useState<number>(0);
+  const [extraWordCredits, setExtraWordCredits] = useState<number>(0);
+  const [extraPdfCredits, setExtraPdfCredits] = useState<number>(0);
   const [fetchingCredits, setFetchingCredits] = useState(true);
 
   const meta = (user?.user_metadata as { plan?: string; canceling?: boolean; stripe_subscription_id?: string; stripe_period_end?: string; display_name?: string } | null) ?? null;
-  const isPro = meta?.plan === "pro";
   const isCanceling = meta?.canceling === true;
 
   const periodEnd = meta?.stripe_period_end;
@@ -47,7 +48,11 @@ const Profile = () => {
     ? Math.ceil((new Date(periodEnd).getTime() - new Date().getTime()) / (1000 * 3600 * 24))
     : 0;
 
-  const planLabel = isPro ? (isCanceling ? "Pro (Canceling)" : "Pro Plan") : "Free Plan";
+  const planLabel = isPro
+    ? meta?.plan === 'yearly'
+      ? (isCanceling ? "Yearly Pro (Canceling)" : "Yearly Pro Plan")
+      : (isCanceling ? "Pro (Canceling)" : "Pro Plan")
+    : "Free Plan";
   const usedToday = isPro ? 0 : DAILY_LIMIT - remainingCredits;
 
   const handleCancelSubscription = async () => {
@@ -93,17 +98,18 @@ const Profile = () => {
       try {
         const { data } = await (supabase as any)
           .from('user_credits')
-          .select('credits, text_count, word_count, pdf_count, extra_text_credits, extra_pdf_credits')
+          .select('credits, text_count, word_count, pdf_count, extra_text_credits, extra_word_credits, extra_pdf_credits')
           .eq('user_id', user.id)
           .single();
 
         if (data) {
           if (data.credits !== undefined) setRemainingCredits(data.credits);
+          if (data.text_count !== undefined) setTextCount(data.text_count);
           if (data.word_count !== undefined) setWordCount(data.word_count);
           if (data.pdf_count !== undefined) setPdfCount(data.pdf_count);
-          if (data.extra_pdf_credits !== undefined) setExtraPdfCredits(data.extra_pdf_credits);
-          if (data.text_count !== undefined) setTextCount(data.text_count);
           if (data.extra_text_credits !== undefined) setExtraTextCredits(data.extra_text_credits);
+          if (data.extra_word_credits !== undefined) setExtraWordCredits(data.extra_word_credits);
+          if (data.extra_pdf_credits !== undefined) setExtraPdfCredits(data.extra_pdf_credits);
         }
       } catch (err) {
         console.error("Credits fetch error:", err);
@@ -184,53 +190,38 @@ const Profile = () => {
             <div>
               <h2 className="font-display text-lg font-semibold">Usage</h2>
               <div className="text-xs text-muted-foreground">
-                {isPro ? (
-                  <span className="text-emerald-500 font-medium">Pro Plan — Monthly limits</span>
-                ) : (
-                  <span>Free Plan — Daily limits</span>
-                )}
+                {isPro ? <span className="text-emerald-500 font-medium">Pro Plan — Monthly limits</span> : <span>Free Plan — Daily limits</span>}
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
 
-            {/* Text düzeltme — sadece Free'de göster */}
-            {!isPro && (
+            {/* Text */}
+            {!isPro ? (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <Gauge className="h-4 w-4 text-primary" />
-                    Text Corrections
+                    <Gauge className="h-4 w-4 text-primary" /> Text Corrections
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {usedToday}/{DAILY_LIMIT} used today
-                  </span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{usedToday}/{DAILY_LIMIT} used today</span>
                 </div>
                 <Progress value={(usedToday / DAILY_LIMIT) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {remainingCredits > 0
-                    ? `${remainingCredits} left — resets in ${resetIn}`
-                    : `Limit reached — resets in ${resetIn}`}
+                  {remainingCredits > 0 ? `${remainingCredits} left — resets in ${resetIn}` : `Limit reached — resets in ${resetIn}`}
                 </p>
               </div>
-            )}
-
-            {/* Pro — text aylık 300 */}
-            {isPro && (
+            ) : (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <Gauge className="h-4 w-4 text-primary" />
-                    Text Corrections
+                    <Gauge className="h-4 w-4 text-primary" /> Text Corrections
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {textCount}/200 used
-                  </span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{textCount}/{PRO_TEXT_MONTHLY} used</span>
                 </div>
-                <Progress value={(textCount / 300) * 100} className="h-1.5" />
+                <Progress value={(textCount / PRO_TEXT_MONTHLY) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {200 - textCount > 0 ? `${200 - textCount} remaining this month` : "Monthly limit reached"}
+                  {PRO_TEXT_MONTHLY - textCount > 0 ? `${PRO_TEXT_MONTHLY - textCount} remaining this month` : "Monthly limit reached"}
                 </p>
                 {extraTextCredits > 0 && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
@@ -240,23 +231,17 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Word dosyaları */}
+            {/* Word */}
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Word Files (.docx)
+                  <FileText className="h-4 w-4 text-primary" /> Word Files (.docx)
                 </div>
                 <span className="text-xs text-muted-foreground tabular-nums">
                   {wordCount}/{isPro ? PRO_WORD_MONTHLY : FREE_WORD_DAILY} used
                 </span>
               </div>
-              <Progress
-                value={isPro
-                  ? (wordCount / PRO_WORD_MONTHLY) * 100
-                  : (wordCount / FREE_WORD_DAILY) * 100}
-                className="h-1.5"
-              />
+              <Progress value={isPro ? (wordCount / PRO_WORD_MONTHLY) * 100 : (wordCount / FREE_WORD_DAILY) * 100} className="h-1.5" />
               <p className="mt-2 text-[11px] text-muted-foreground">
                 {isPro
                   ? `${PRO_WORD_MONTHLY - wordCount} remaining this month`
@@ -264,42 +249,37 @@ const Profile = () => {
                     ? `Daily limit reached — resets in ${resetIn}`
                     : `${FREE_WORD_DAILY - wordCount} remaining today`}
               </p>
+              {isPro && extraWordCredits > 0 && (
+                <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
+                  +{extraWordCredits} extra credits available
+                </div>
+              )}
             </div>
 
-            {/* PDF dosyaları — sadece Pro */}
-            {isPro && (
+            {/* PDF */}
+            {isPro ? (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileType2 className="h-4 w-4 text-primary" />
-                    PDF Files
+                    <FileType2 className="h-4 w-4 text-primary" /> PDF Files
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    {pdfCount}/{PRO_PDF_MONTHLY} used
-                  </span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{pdfCount}/{PRO_PDF_MONTHLY} used</span>
                 </div>
                 <Progress value={(pdfCount / PRO_PDF_MONTHLY) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {PRO_PDF_MONTHLY - pdfCount > 0
-                    ? `${PRO_PDF_MONTHLY - pdfCount} remaining this month`
-                    : "Monthly limit reached"}
+                  {PRO_PDF_MONTHLY - pdfCount > 0 ? `${PRO_PDF_MONTHLY - pdfCount} remaining this month` : "Monthly limit reached"}
                 </p>
-                {/* Ekstra krediler */}
                 {extraPdfCredits > 0 && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
                     +{extraPdfCredits} extra credits available
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Free kullanıcıya PDF kapalı bilgisi */}
-            {!isPro && (
+            ) : (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4 opacity-60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileType2 className="h-4 w-4" />
-                    PDF Files
+                    <FileType2 className="h-4 w-4" /> PDF Files
                   </div>
                   <Link to="/pricing">
                     <span className="text-[11px] text-primary underline cursor-pointer">Pro only</span>
@@ -331,20 +311,14 @@ const Profile = () => {
               </div>
               {!isPro ? (
                 <Link to="/pricing">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Upgrade to Pro
-                  </Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Upgrade to Pro</Button>
                 </Link>
               ) : isCanceling ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                   <Clock className="h-3 w-3" /> Canceling
                 </span>
               ) : (
-                <Button
-                  variant="outline"
-                  className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={handleCancelSubscription}
-                >
+                <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancelSubscription}>
                   Cancel Subscription
                 </Button>
               )}
@@ -352,14 +326,8 @@ const Profile = () => {
 
             {isCanceling && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground">
-                Your Pro plan is active for <span className="font-semibold text-foreground">{daysLeft} more days</span>.
-                After that you'll be moved to the Free plan.
-                <button
-                  onClick={handleReactivate}
-                  className="ml-2 text-primary underline hover:no-underline font-medium"
-                >
-                  Reactivate
-                </button>
+                Your Pro plan is active for <span className="font-semibold text-foreground">{daysLeft} more days</span>. After that you'll be moved to the Free plan.
+                <button onClick={handleReactivate} className="ml-2 text-primary underline hover:no-underline font-medium">Reactivate</button>
               </div>
             )}
           </div>

@@ -255,23 +255,21 @@ serve(async (req: Request) => {
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set');
 
-    // ── Supabase Admin Client ──
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SERVICE_ROLE_KEY')!
     );
 
-    // ── Kullanıcıyı JWT'den al ──
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Unauthorized');
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    const isPro = user.user_metadata?.plan === 'pro';
+    // Yearly + Pro destekli
+    const isPro = user.user_metadata?.plan === 'pro' || user.user_metadata?.plan === 'yearly';
     const { text, tone, fileBase64, fileName, isFile } = await req.json();
 
-    // ── İşlem tipini belirle ──
     let usageType: 'text' | 'word' | 'pdf';
     if (isFile && fileName?.toLowerCase().endsWith('.docx')) {
       usageType = 'word';
@@ -281,7 +279,6 @@ serve(async (req: Request) => {
       usageType = 'text';
     }
 
-    // ── BACKEND LİMİT KONTROLÜ (Atomic - Race condition yok) ──
     const { data: limitData, error: limitError } = await supabaseAdmin
       .rpc('check_and_increment_usage', {
         p_user_id: user.id,
@@ -293,11 +290,12 @@ serve(async (req: Request) => {
 
     if (!limitData.allowed) {
       const messages: Record<string, string> = {
-        daily_text_limit:  'Daily text limit reached. Resets tomorrow.',
-        daily_word_limit:  'Daily Word file limit reached. Resets tomorrow.',
-        monthly_word_limit:'Monthly Word file limit reached (50/month).',
-        pdf_pro_only:      'PDF processing is a Pro feature.',
-        pdf_limit_buy_more:'Monthly PDF limit reached. Purchase extra credits to continue.',
+        daily_text_limit:    'Daily text limit reached. Resets tomorrow.',
+        daily_word_limit:    'Daily Word file limit reached. Resets tomorrow.',
+        text_limit_buy_more: 'Monthly text limit reached. Purchase extra credits to continue.',
+        word_limit_buy_more: 'Monthly Word limit reached. Purchase extra credits to continue.',
+        pdf_pro_only:        'PDF processing is a Pro feature.',
+        pdf_limit_buy_more:  'Monthly PDF limit reached. Purchase extra credits to continue.',
       };
       return new Response(
         JSON.stringify({ error: messages[limitData.reason] ?? 'Limit reached.', limitReason: limitData.reason }),
@@ -305,7 +303,6 @@ serve(async (req: Request) => {
       );
     }
 
-    // ── DOCX İŞLEME ──
     const toneKey = (String(tone || "standard").toLowerCase().trim()) as ToneKey;
     const validTones: ToneKey[] = ["standard", "formal", "friendly", "academic"];
     const resolvedTone: ToneKey = validTones.includes(toneKey) ? toneKey : "standard";
@@ -330,7 +327,6 @@ serve(async (req: Request) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ── DÜZ METİN İŞLEME ──
     const inputText = text || "";
     if (!inputText.trim()) throw new Error('No text provided');
     const { finalText, corrections } = await translateText(inputText, resolvedTone, OPENAI_API_KEY);

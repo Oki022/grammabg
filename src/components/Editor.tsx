@@ -134,6 +134,7 @@ const Editor = () => {
   // Kredi modalları
   const [creditModalOpen, setCreditModalOpen] = useState(false);
   const [textCreditModalOpen, setTextCreditModalOpen] = useState(false);
+  const [wordCreditModalOpen, setWordCreditModalOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,6 +162,8 @@ const Editor = () => {
     if (params.get('payment') === 'success') {
       if (paymentType === 'extra_text_credits') {
         toast.success('🎉 100 text credits added to your account!', { duration: 5000 });
+      } else if (paymentType === 'extra_word_credits') {
+        toast.success('🎉 25 Word credits added to your account!', { duration: 5000 });
       } else {
         toast.success('🎉 20 PDF credits added to your account!', { duration: 5000 });
       }
@@ -189,6 +192,7 @@ const Editor = () => {
               if (data?.limitReason) {
                 if (data.limitReason === 'pdf_limit_buy_more') setCreditModalOpen(true);
                 else if (data.limitReason === 'text_limit_buy_more') setTextCreditModalOpen(true);
+                else if (data.limitReason === 'word_limit_buy_more') setWordCreditModalOpen(true);
                 else toast.error(data.error || 'Limit reached.');
                 setLoading(false); return;
               }
@@ -197,6 +201,7 @@ const Editor = () => {
             if (data && data.error) {
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               throw new Error(data.error);
             }
 
@@ -229,6 +234,7 @@ const Editor = () => {
           if (data?.limitReason) {
             if (data.limitReason === 'pdf_limit_buy_more') setCreditModalOpen(true);
             else if (data.limitReason === 'text_limit_buy_more') setTextCreditModalOpen(true);
+                else if (data.limitReason === 'word_limit_buy_more') setWordCreditModalOpen(true);
             else toast.error(data.error || 'Limit reached.');
             setLoading(false); return;
           }
@@ -237,6 +243,7 @@ const Editor = () => {
         if (data && data.error) {
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           throw new Error(data.error);
         }
 
@@ -429,7 +436,7 @@ const Editor = () => {
   };
 
   // Kredi satın alma — type parametreli
-  const handleBuyCredits = async (type: 'extra_pdf_credits' | 'extra_text_credits') => {
+  const handleBuyCredits = async (type: 'extra_pdf_credits' | 'extra_text_credits' | 'extra_word_credits') => {
     setBuyingCredits(true);
     try {
       const { data, error } = await supabase.functions.invoke('buy-credits', { body: { type } });
@@ -712,6 +719,26 @@ const Editor = () => {
               : <><Sparkles className="h-4 w-4 mr-2" />Buy 100 Text Credits — €1.99</>}
             </Button>
             <button type="button" onClick={() => setTextCreditModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">Maybe later</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Word Limit modal */}
+      <Dialog open={wordCreditModalOpen} onOpenChange={setWordCreditModalOpen}>
+        <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald"><FileText className="h-7 w-7 text-primary-foreground" /></div>
+            <DialogTitle className="text-center font-display text-2xl">Word Limit <span className="text-gradient-emerald">Reached</span></DialogTitle>
+            <DialogDescription className="text-center">
+              You've used all 50 monthly Word file credits. Get <span className="font-semibold text-foreground">25 extra Word credits</span> for only <span className="font-semibold text-foreground">€2.99</span> — one-time payment.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            <Button variant="emerald" size="lg" className="w-full" disabled={buyingCredits} onClick={() => handleBuyCredits('extra_word_credits')}>
+              {buyingCredits ? <span className="flex items-center gap-2"><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Redirecting...</span>
+              : <><Sparkles className="h-4 w-4 mr-2" />Buy 25 Word Credits — €2.99</>}
+            </Button>
+            <button type="button" onClick={() => setWordCreditModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">Maybe later</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

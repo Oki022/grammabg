@@ -46,8 +46,10 @@ const signOut = async () => {
   };
 
   const isPro = 
-    user?.user_metadata?.plan === "pro" ||
-    user?.app_metadata?.plan === "pro";
+  user?.user_metadata?.plan === "pro" ||
+  user?.user_metadata?.plan === "yearly" ||
+  user?.app_metadata?.plan === "pro" ||
+  user?.app_metadata?.plan === "yearly";
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signOut, isPro, refreshUser }}>

@@ -8,6 +8,7 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 
 const EXTRA_PDF_CREDITS_PER_PACK  = 20;
 const EXTRA_TEXT_CREDITS_PER_PACK = 100;
+const EXTRA_WORD_CREDITS_PER_PACK = 25;
 
 serve(async (req: Request) => {
   const signature = req.headers.get('stripe-signature');
@@ -24,7 +25,6 @@ serve(async (req: Request) => {
       Deno.env.get('SERVICE_ROLE_KEY') || ''
     );
 
-    // ── 1. checkout.session.completed ──
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
       const userId = session.client_reference_id;
@@ -35,7 +35,6 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({ received: true }), { status: 200 });
       }
 
-      // Abonelik
       if (mode === 'subscription') {
         const subscriptionId = session.subscription;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -63,7 +62,6 @@ serve(async (req: Request) => {
         console.log(`Pro activated for ${userId}`);
       }
 
-      // Tek seferlik ödeme (ekstra kredi)
       if (mode === 'payment') {
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
 
@@ -85,11 +83,18 @@ serve(async (req: Request) => {
             });
             console.log(`Added ${EXTRA_TEXT_CREDITS_PER_PACK} text credits to ${userId}`);
           }
+
+          if (meta.type === 'extra_word_credits') {
+            await supabaseAdmin.rpc('add_extra_word_credits', {
+              p_user_id: userId,
+              p_amount: EXTRA_WORD_CREDITS_PER_PACK,
+            });
+            console.log(`Added ${EXTRA_WORD_CREDITS_PER_PACK} word credits to ${userId}`);
+          }
         }
       }
     }
 
-    // ── 2. invoice.payment_succeeded (aylık yenileme) ──
     if (event.type === 'invoice.payment_succeeded') {
       const invoice = event.data.object as any;
       if (invoice.billing_reason !== 'subscription_cycle') {
@@ -116,7 +121,6 @@ serve(async (req: Request) => {
       }
     }
 
-    // ── 3. customer.subscription.deleted ──
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as any;
       const { data: profile } = await supabaseAdmin

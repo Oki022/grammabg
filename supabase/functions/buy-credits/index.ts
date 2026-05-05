@@ -11,10 +11,10 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   httpClient: Stripe.createFetchHttpClient(),
 })
 
-// Price ID'ler
 const PRICE_IDS = {
   extra_pdf_credits:  'price_1TTRYrH7gfnEgeld2OyR4k5i',
   extra_text_credits: 'price_1TTSTeH7gfnEgeld1WrL7g4F',
+  extra_word_credits: 'price_1TTg1wH7gfnEgeldftr7thzk',
 }
 
 serve(async (req: Request) => {
@@ -32,16 +32,12 @@ serve(async (req: Request) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
-    // type: 'extra_pdf_credits' | 'extra_text_credits'
     const { type } = await req.json();
     const priceId = PRICE_IDS[type as keyof typeof PRICE_IDS];
     if (!priceId) throw new Error('Invalid credit type');
 
     const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single();
+      .from('profiles').select('stripe_customer_id').eq('id', user.id).single();
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',

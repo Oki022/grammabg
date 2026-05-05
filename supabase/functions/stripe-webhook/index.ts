@@ -41,9 +41,12 @@ serve(async (req: Request) => {
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
 
+        const purchasedPriceId = session.line_items?.data?.[0]?.price?.id || '';
+        const planType = purchasedPriceId === 'price_1TSddXH7gfnEgeldBwm8sfAV' ? 'yearly' : 'pro';
+
         await supabaseAdmin.auth.admin.updateUserById(userId, {
           user_metadata: {
-            plan: 'pro',
+            plan: planType,
             stripe_subscription_id: subscriptionId,
             stripe_period_end: periodEnd,
             stripe_customer_id: session.customer,

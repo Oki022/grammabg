@@ -25,10 +25,10 @@ serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',
-      // Yönlendirmeleri ana dizine (/) çekiyoruz ki SPA router'ın 404 vermesin
       success_url: `${origin}/?success=true`,
       cancel_url: `${origin}/?canceled=true`,
       client_reference_id: userId,
+      expand: ['line_items'],
     })
 
     return new Response(JSON.stringify({ url: session.url }), {

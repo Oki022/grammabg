@@ -44,21 +44,27 @@ TONE — ACADEMIC (Contemporary Scholarly Bulgarian):
 };
 
 function buildSystemPrompt(tone: ToneKey): string {
-  return `You are an expert Bulgarian language editor. You receive paragraphs of Bulgarian text and must correct them.
+  return `You are an expert Bulgarian language editor. You receive paragraphs of Bulgarian text and must correct ONLY real errors.
 
-WHAT TO FIX:
-1. Spelling errors
-2. Words accidentally split across runs
+WHAT TO FIX (only genuine errors):
+1. Spelling errors — genuinely misspelled words
+2. Words accidentally split across runs (missing spaces between words)
 3. Missing spaces between words
-4. Punctuation errors
-5. Grammar and natural phrasing
+4. Clear punctuation errors
+5. Clear grammar errors
 
 WHAT NOT TO CHANGE:
+- Correct text that has no errors — leave it exactly as-is
 - Proper nouns (person names, city names, institution names, abbreviations)
 - Numbers, dates, reference codes
-- Legal/official terminology that is intentionally formal
+- Capitalization that is already correct
+- Sentence structure that is already correct Bulgarian
+- Word order that is already natural Bulgarian
 
-${TONE_PROFILES[tone]}
+CRITICAL: If a paragraph has no errors, return it UNCHANGED with "changed": false.
+DO NOT rephrase, rewrite, or "improve" text that is already correct.
+
+${tone !== 'standard' ? TONE_PROFILES[tone] : ''}
 
 OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
 {
@@ -69,32 +75,43 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
   "corrections": [
     {"original": "wrong text", "corrected": "fixed text", "reason": "explanation in English"}
   ]
-}`;
+}
+
+For corrections: ONLY include genuinely wrong text that was fixed. If no real errors — return [].`;
 }
 
 function buildPlainTextPrompt(tone: ToneKey): string {
-  return `You are an expert Bulgarian language specialist. Your task has TWO steps:
+  return `You are an expert Bulgarian language specialist. Your task:
 
-STEP 1 — TRANSLATE/CORRECT:
-- If input is in another language, translate ALL of it into Bulgarian. 100% — no skipping.
-- If input is already Bulgarian, fix all spelling, grammar, punctuation, and spacing errors.
+IF INPUT IS IN ANOTHER LANGUAGE:
+- Translate ALL of it into Bulgarian. 100% — no skipping.
+- Return corrections as empty array [].
 
-STEP 2 — APPLY TONE (MANDATORY):
-${TONE_PROFILES[tone]}
+IF INPUT IS ALREADY BULGARIAN:
+- Fix ONLY real errors: spelling mistakes, grammar errors, wrong punctuation, missing spaces.
+- DO NOT change correct text. DO NOT rephrase. DO NOT rewrite sentences that are already correct.
+- DO NOT change capitalization unless it is genuinely wrong.
+- Preserve the EXACT structure, line breaks, and formatting of the original text.
+- If text has no errors, return it exactly as-is with corrections as [].
 
-RULES:
+${tone !== 'standard' ? `TONE ADJUSTMENT (only if translating from another language):
+${TONE_PROFILES[tone]}` : ''}
+
+CRITICAL RULES:
 - Do NOT change proper nouns, person names, city names, numbers, dates, reference codes.
-- Process 100% of the input — no skipping sentences.
+- Do NOT add or remove sentences.
+- Do NOT change word order if it is already correct Bulgarian.
+- PRESERVE all line breaks with \\n exactly as in input.
 
 Return ONLY valid JSON:
 {
-  "finalText": "the complete rewritten Bulgarian text — PRESERVE all line breaks with \\n",
+  "finalText": "the corrected text — preserve all line breaks with \\n",
   "corrections": [
     {"original": "wrong part", "corrected": "fixed part", "reason": "explanation in English"}
   ]
 }
 
-For corrections: ONLY log Bulgarian spelling/grammar errors. If translated from another language — return [].`;
+For corrections: ONLY log actual spelling/grammar errors that were genuinely wrong. If no real errors found — return [].`;
 }
 
 function escapeXml(s: string): string {

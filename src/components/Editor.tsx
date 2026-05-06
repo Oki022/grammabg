@@ -218,7 +218,7 @@ const Editor = () => {
            user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
            });
            }
-            setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2").trim());
+            setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
             setFileName(data.fileName);
             toast.success("The Word file has been translated flawlessly!");
             setLoading(false);
@@ -251,7 +251,7 @@ const Editor = () => {
           throw new Error(data.error);
         }
 
-        setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2").trim());
+        setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
         setCorrections(
        (data.corrections || []).filter(
        (c: any) => c.original?.trim() !== c.corrected?.trim()

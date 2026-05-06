@@ -184,34 +184,28 @@ const Editor = () => {
         reader.onload = async () => {
           try {
             const base64 = (reader.result as string).split(',')[1];
-            const { data, error } = await supabase.functions.invoke('fix-text', {
-              body: { fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true }
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token}`,
+              },
+              body: JSON.stringify({ fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true })
             });
-
-            if (error) {
-            let limitReason = '';
-             try {
-              const bodyStr = (error as any)?.context?.responseText 
-            || (error as any)?.context?.body 
-             || JSON.stringify(error);
-            const parsed = JSON.parse(bodyStr);
-             limitReason = parsed.limitReason || '';
-             } catch {}
-
-             if (limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
-             if (limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
-             if (limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
-             if (limitReason === 'daily_text_limit' || limitReason === 'daily_word_limit') { 
-              toast.error(error.message || 'Limit reached.'); setLoading(false); return; 
-               }
-                throw error;
-               }
-                if (data && data.error) {
-               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
-                if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
-                if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
-                 throw new Error(data.error);
-                 }
+            const data = await res.json();
+            if (!res.ok) {
+              if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+              toast.error(data.error || 'Limit reached.'); setLoading(false); return;
+            }
+            if (data && data.error) {
+              if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+              throw new Error(data.error);
+            }
 
             setCorrectedFileBase64(data.fileResult);
             setCorrections(
@@ -234,33 +228,28 @@ const Editor = () => {
           }
         };
       } else {
-        const { data, error } = await supabase.functions.invoke('fix-text', {
-          body: { text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined }
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined })
         });
-if (error) {
-  let limitReason = '';
-  try {
-    const bodyStr = (error as any)?.context?.responseText 
-      || (error as any)?.context?.body 
-      || JSON.stringify(error);
-    const parsed = JSON.parse(bodyStr);
-    limitReason = parsed.limitReason || '';
-  } catch {}
-
-  if (limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
-  if (limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
-  if (limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
-  if (limitReason === 'daily_text_limit' || limitReason === 'daily_word_limit') { 
-    toast.error(error.message || 'Limit reached.'); setLoading(false); return; 
-  }
-  throw error;
-}
-if (data && data.error) {
-  if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
-  if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
-  if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
-  throw new Error(data.error);
-}
+        const data = await res.json();
+        if (!res.ok) {
+          if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
+          if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
+          if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+          toast.error(data.error || 'Limit reached.'); setLoading(false); return;
+        }
+        if (data && data.error) {
+          if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
+          if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
+          if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+          throw new Error(data.error);
+        }
 
         setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").replace(/([.!?])\s+([А-ЯA-Z])/g, "$1\n$2").trim());
         setCorrections(

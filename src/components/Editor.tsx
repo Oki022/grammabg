@@ -190,6 +190,12 @@ const Editor = () => {
     };
     generateFingerprint();
   }, []);
+  useEffect(() => {
+  if (user) {
+    localStorage.removeItem('anonRemaining');
+    localStorage.removeItem('freeWordUsed');
+  }
+}, [user]);
 
   // payment=success kontrolü
   useEffect(() => {

@@ -341,7 +341,7 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({
           result: previewText, fileResult: newZipBase64,
           fileName: `Corrected_${fileName}`, corrections,
-          anonRemaining: { text: 5 - (anonLimit.text_count ?? 0), word: 1 - (anonLimit.word_count ?? 0) }
+          anonRemaining: { text: Math.max(0, 5 - (anonLimit.text_count ?? 0)), word: Math.max(0, 1 - (anonLimit.word_count ?? 0)) }
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
@@ -351,7 +351,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           result: finalText, corrections,
-          anonRemaining: { text: 5 - (anonLimit.text_count ?? 0), word: 1 - (anonLimit.word_count ?? 0) }
+          anonRemaining: { text: Math.max(0, 5 - (anonLimit.text_count ?? 0)), word: Math.max(0, 1 - (anonLimit.word_count ?? 0)) }
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

@@ -146,6 +146,12 @@ const Editor = () => {
   const [anonResetAt, setAnonResetAt] = useState<string>("");
   const [anonRemaining, setAnonRemaining] = useState<{ text: number; word: number } | null>(() => {
   try {
+    const resetAt = localStorage.getItem('anonResetAt');
+    if (resetAt && new Date() > new Date(resetAt)) {
+      localStorage.removeItem('anonRemaining');
+      localStorage.removeItem('anonResetAt');
+      return { text: 5, word: 1 };
+    }
     const saved = localStorage.getItem('anonRemaining');
     return saved ? JSON.parse(saved) : { text: 5, word: 1 };
   } catch { return { text: 5, word: 1 }; }
@@ -254,9 +260,12 @@ const Editor = () => {
             const data = await res.json();
             if (!res.ok) {
               if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
-                setAnonResetAt(data.resetAt || '');
-                setAnonLimitModalOpen(true); setLoading(false); return;
-              }
+  setAnonResetAt(data.resetAt || '');
+  setAnonRemaining({ text: 0, word: 0 });
+  localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+  localStorage.setItem('anonResetAt', data.resetAt || '');  // ← BUNU EKLE
+  setAnonLimitModalOpen(true); setLoading(false); return;
+}
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
@@ -317,9 +326,12 @@ setLoading(false);
         const data = await res.json();
         if (!res.ok) {
           if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
-            setAnonResetAt(data.resetAt || '');
-            setAnonLimitModalOpen(true); setLoading(false); return;
-          }
+  setAnonResetAt(data.resetAt || '');
+  setAnonRemaining({ text: 0, word: 0 });
+  localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+  localStorage.setItem('anonResetAt', data.resetAt || '');  // ← BUNU EKLE
+  setAnonLimitModalOpen(true); setLoading(false); return;
+}
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
@@ -587,16 +599,16 @@ if (user && isPro && data.result) {
           <div className="mb-3 flex flex-row flex-wrap items-center justify-end gap-2">
             <button
   onClick={handleUploadClick}
-  disabled={uploading || (!isPro && !!user && (freeWordUsed || wordLimitReached))}
+  disabled={uploading || (!isPro && !!user && (freeWordUsed || wordLimitReached)) || (!user && anonRemaining?.word === 0)}
   className={`inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition-smooth backdrop-blur
-    ${!isPro && !!user && (freeWordUsed || wordLimitReached)
+    ${(!isPro && !!user && (freeWordUsed || wordLimitReached)) || (!user && anonRemaining?.word === 0)
       ? 'bg-secondary/40 text-muted-foreground/50 cursor-not-allowed opacity-60'
       : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
     } disabled:cursor-not-allowed`}
 >
   <Upload className="h-3.5 w-3.5" />
   {uploading ? "Reading..." : "Upload .docx"}
-  {!isPro && !!user && (freeWordUsed || wordLimitReached) && <Lock className="ml-1 h-3 w-3 text-primary/80" />}
+  {((!isPro && !!user && (freeWordUsed || wordLimitReached)) || (!user && anonRemaining?.word === 0)) && <Lock className="ml-1 h-3 w-3 text-primary/80" />}
 </button>
             <button onClick={handlePdfClick} disabled={uploading}
               className="relative inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur">

@@ -141,7 +141,12 @@ const Editor = () => {
   const [fingerprint, setFingerprint] = useState<string>("");
   const [anonLimitModalOpen, setAnonLimitModalOpen] = useState(false);
   const [anonResetAt, setAnonResetAt] = useState<string>("");
-  const [anonRemaining, setAnonRemaining] = useState<{ text: number; word: number } | null>(null);
+  const [anonRemaining, setAnonRemaining] = useState<{ text: number; word: number } | null>(() => {
+  try {
+    const saved = localStorage.getItem('anonRemaining');
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
@@ -258,14 +263,17 @@ const Editor = () => {
             }
             setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
             setFileName(data.fileName);
-            if (data.anonRemaining) setAnonRemaining(data.anonRemaining);
-            toast.success("The Word file has been translated flawlessly!");
-            setLoading(false);
-          } catch (err: any) {
-            toast.error(err.message || "An error occurred during translation.");
-            setLoading(false);
-          }
-        };
+            if (data.anonRemaining) {
+  setAnonRemaining(data.anonRemaining);
+  localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
+}
+toast.success("The Word file has been translated flawlessly!");
+setLoading(false);
+} catch (err: any) {
+  toast.error(err.message || "An error occurred during translation.");
+  setLoading(false);
+}
+};
       } else {
         const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
           method: 'POST',
@@ -299,12 +307,15 @@ const Editor = () => {
             (c: any) => c.original?.trim() !== c.corrected?.trim()
           )
         );
-        if (data.anonRemaining) setAnonRemaining(data.anonRemaining);
-        if (user && isPro && data.result) {
-          await supabase.from('history' as any).insert({
-            user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-          });
-        }
+        if (data.anonRemaining) {
+  setAnonRemaining(data.anonRemaining);
+  localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
+}
+if (user && isPro && data.result) {
+  await supabase.from('history' as any).insert({
+    user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+  });
+}
         toast.success("Text successfully polished!");
         setLoading(false);
       }

@@ -110,6 +110,7 @@ const Editor = () => {
   const navigate = useNavigate();
 
   const [inputText, setInputText] = useState("");
+  const [wordLimitReached, setWordLimitReached] = useState(false);
   const [outputText, setOutputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
@@ -273,6 +274,7 @@ const Editor = () => {
   setAnonRemaining(data.anonRemaining);
   localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
 }
+if (!isPro) setWordLimitReached(true);
 toast.success("The Word file has been translated flawlessly!");
 setLoading(false);
 } catch (err: any) {
@@ -372,9 +374,13 @@ if (user && isPro && data.result) {
   const handleDocxClick = () => docxInputRef.current?.click();
   const handlePdfClick = () => { if (!isPro) { setPdfModalOpen(true); return; } pdfInputRef.current?.click(); };
   const handleUploadClick = (e: React.MouseEvent) => {
-    if (!isPro && freeWordUsed) { e.preventDefault(); setWordModalOpen(true); return; }
-    handleDocxClick();
-  };
+  if (!isPro && (freeWordUsed || wordLimitReached)) { 
+    e.preventDefault(); 
+    setWordModalOpen(true); 
+    return; 
+  }
+  handleDocxClick();
+};
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

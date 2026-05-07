@@ -144,9 +144,9 @@ const Editor = () => {
   const [anonRemaining, setAnonRemaining] = useState<{ text: number; word: number } | null>(() => {
   try {
     const saved = localStorage.getItem('anonRemaining');
-    return saved ? JSON.parse(saved) : null;
-  } catch { return null; }
-  });
+    return saved ? JSON.parse(saved) : { text: 5, word: 1 };
+  } catch { return { text: 5, word: 1 }; }
+});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);

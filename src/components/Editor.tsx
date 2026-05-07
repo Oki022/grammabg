@@ -110,7 +110,9 @@ const Editor = () => {
   const navigate = useNavigate();
 
   const [inputText, setInputText] = useState("");
-  const [wordLimitReached, setWordLimitReached] = useState(false);
+  const [wordLimitReached, setWordLimitReached] = useState(() => {
+  return localStorage.getItem('freeWordUsed') === 'true';
+  });
   const [outputText, setOutputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
@@ -274,7 +276,10 @@ const Editor = () => {
   setAnonRemaining(data.anonRemaining);
   localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
 }
-if (!isPro) setWordLimitReached(true);
+if (!isPro) {
+  setWordLimitReached(true);
+  localStorage.setItem('freeWordUsed', 'true');
+}
 toast.success("The Word file has been translated flawlessly!");
 setLoading(false);
 } catch (err: any) {

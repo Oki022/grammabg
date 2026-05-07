@@ -141,6 +141,7 @@ const Editor = () => {
   const [fingerprint, setFingerprint] = useState<string>("");
   const [anonLimitModalOpen, setAnonLimitModalOpen] = useState(false);
   const [anonResetAt, setAnonResetAt] = useState<string>("");
+  const [anonRemaining, setAnonRemaining] = useState<{ text: number; word: number } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
@@ -157,8 +158,11 @@ const Editor = () => {
     ? "Checking..."
     : loading ? "Fixing..."
     : limitReached ? "Upgrade to Pro"
-    : !user ? "Fix My Text"
-    : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
+    : !user
+      ? anonRemaining !== null
+        ? `Fix My Text (${anonRemaining.text}/5 left)`
+        : "Fix My Text"
+      : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
 
   // Fingerprint oluştur
   useEffect(() => {
@@ -254,6 +258,7 @@ const Editor = () => {
             }
             setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
             setFileName(data.fileName);
+            if (data.anonRemaining) setAnonRemaining(data.anonRemaining);
             toast.success("The Word file has been translated flawlessly!");
             setLoading(false);
           } catch (err: any) {
@@ -294,6 +299,7 @@ const Editor = () => {
             (c: any) => c.original?.trim() !== c.corrected?.trim()
           )
         );
+        if (data.anonRemaining) setAnonRemaining(data.anonRemaining);
         if (user && isPro && data.result) {
           await supabase.from('history' as any).insert({
             user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
@@ -576,9 +582,12 @@ const Editor = () => {
           </Button>
           <p className="text-xs text-muted-foreground">
             {isChecking ? "Checking credits..."
-              : !user ? "Login to get 5 free daily credits"
-              : limitReached ? "You've used all 5 free checks today."
-              : `${remaining} free check${remaining === 1 ? "" : "s"} left`}
+              : !user
+                ? anonRemaining !== null
+                  ? `${anonRemaining.text} free check${anonRemaining.text === 1 ? "" : "s"} left today`
+                  : "5 free checks per day — no account needed"
+                : limitReached ? "You've used all 5 free checks today."
+                : `${remaining} free check${remaining === 1 ? "" : "s"} left`}
           </p>
         </div>
 

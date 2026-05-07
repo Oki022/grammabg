@@ -278,14 +278,12 @@ serve(async (req: Request) => {
     );
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('Unauthorized');
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) throw new Error('Unauthorized');
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+                      req.headers.get('x-real-ip') || 'unknown';
 
-    // Yearly + Pro destekli
-    const isPro = user.user_metadata?.plan === 'pro' || user.user_metadata?.plan === 'yearly';
-    const { text, tone, fileBase64, fileName, isFile } = await req.json();
+    // Body'yi oku
+    const body = await req.json();
+    const { text, tone, fileBase64, fileName, isFile, fingerprint } = body;
 
     let usageType: 'text' | 'word' | 'pdf';
     if (isFile && fileName?.toLowerCase().endsWith('.docx')) {
@@ -295,6 +293,82 @@ serve(async (req: Request) => {
     } else {
       usageType = 'text';
     }
+
+    // ── ANONİM KULLANICI ──
+    if (!authHeader || authHeader === 'Bearer null' || authHeader === 'Bearer undefined') {
+      // PDF anonim kullanıcıya kapalı
+      if (usageType === 'pdf') {
+        return new Response(
+          JSON.stringify({ error: 'PDF processing requires an account.', limitReason: 'pdf_pro_only' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+        );
+      }
+
+      if (!fingerprint) {
+        return new Response(
+          JSON.stringify({ error: 'Fingerprint required for anonymous usage.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+
+      const { data: anonLimit, error: anonError } = await supabaseAdmin
+        .rpc('check_anonymous_usage', {
+          p_fingerprint: fingerprint,
+          p_ip: ipAddress,
+          p_type: usageType,
+        });
+
+      if (anonError) throw new Error('Anon limit check failed: ' + anonError.message);
+
+      if (!anonLimit.allowed) {
+        return new Response(
+          JSON.stringify({
+            error: 'Daily limit reached. Create a free account to continue.',
+            limitReason: anonLimit.reason,
+            resetAt: anonLimit.reset_at,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
+        );
+      }
+
+      // Anonim kullanıcı — limit geçilmemiş, devam et
+      const toneKeyAnon = (String(tone || "standard").toLowerCase().trim()) as ToneKey;
+      const validTonesAnon: ToneKey[] = ["standard", "formal", "friendly", "academic"];
+      const resolvedToneAnon: ToneKey = validTonesAnon.includes(toneKeyAnon) ? toneKeyAnon : "standard";
+
+      if (fileBase64 && fileName?.toLowerCase().endsWith('.docx')) {
+        const zip = new JSZip();
+        const binaryData = Uint8Array.from(atob(fileBase64), c => c.charCodeAt(0));
+        const content = await zip.loadAsync(binaryData);
+        const docXmlFile = content.file("word/document.xml");
+        if (!docXmlFile) throw new Error('word/document.xml not found');
+        const docXml = await docXmlFile.async("string");
+        const { updatedXml, corrections } = await translateDocx(docXml, resolvedToneAnon, OPENAI_API_KEY);
+        zip.file("word/document.xml", updatedXml);
+        const newZipBase64 = await zip.generateAsync({ type: "base64" });
+        const previewText = extractPreviewText(updatedXml);
+        return new Response(JSON.stringify({
+          result: previewText, fileResult: newZipBase64,
+          fileName: `Corrected_${fileName}`, corrections,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const inputTextAnon = text || "";
+      if (!inputTextAnon.trim()) throw new Error('No text provided');
+      const { finalText, corrections } = await translateText(inputTextAnon, resolvedToneAnon, OPENAI_API_KEY);
+      return new Response(
+        JSON.stringify({ result: finalText, corrections }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // ── GİRİŞ YAPMIŞ KULLANICI ──
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) throw new Error('Unauthorized');
+
+    // Yearly + Pro destekli
+    const isPro = user.user_metadata?.plan === 'pro' || user.user_metadata?.plan === 'yearly';
 
     const { data: limitData, error: limitError } = await supabaseAdmin
       .rpc('check_and_increment_usage', {

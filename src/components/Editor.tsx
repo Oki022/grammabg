@@ -137,6 +137,11 @@ const Editor = () => {
   const [wordCreditModalOpen, setWordCreditModalOpen] = useState(false);
   const [buyingCredits, setBuyingCredits] = useState(false);
 
+  // Anonim kullanıcı
+  const [fingerprint, setFingerprint] = useState<string>("");
+  const [anonLimitModalOpen, setAnonLimitModalOpen] = useState(false);
+  const [anonResetAt, setAnonResetAt] = useState<string>("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
@@ -150,10 +155,32 @@ const Editor = () => {
 
   const buttonLabel = isChecking
     ? "Checking..."
-    : !user ? "Fix My Text"
-    : limitReached ? "Upgrade to Pro"
     : loading ? "Fixing..."
+    : limitReached ? "Upgrade to Pro"
+    : !user ? "Fix My Text"
     : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
+
+  // Fingerprint oluştur
+  useEffect(() => {
+    const generateFingerprint = async () => {
+      const components = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + 'x' + screen.height,
+        screen.colorDepth,
+        new Date().getTimezoneOffset(),
+        navigator.hardwareConcurrency,
+        navigator.platform,
+      ].join('|');
+      const encoder = new TextEncoder();
+      const data = encoder.encode(components);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      setFingerprint(hashHex);
+    };
+    generateFingerprint();
+  }, []);
 
   // payment=success kontrolü
   useEffect(() => {
@@ -174,27 +201,34 @@ const Editor = () => {
   const handleFix = async () => {
     const currentWordFile = docxInputRef.current?.files?.[0];
     if ((!currentWordFile && !inputText) || loading || limitReached) return;
-    if (!user) { navigate("/login"); return; }
+
+    // Anonim kullanıcı — login'e yönlendirme YOK, direkt devam et
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || null;
+
       if (currentWordFile) {
         const reader = new FileReader();
         reader.readAsDataURL(currentWordFile);
         reader.onload = async () => {
           try {
             const base64 = (reader.result as string).split(',')[1];
-            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session?.access_token}`,
+                ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
               },
-              body: JSON.stringify({ fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true })
+              body: JSON.stringify({ fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true, fingerprint })
             });
             const data = await res.json();
             if (!res.ok) {
+              if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
+                setAnonResetAt(data.resetAt || '');
+                setAnonLimitModalOpen(true); setLoading(false); return;
+              }
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
@@ -209,15 +243,15 @@ const Editor = () => {
 
             setCorrectedFileBase64(data.fileResult);
             setCorrections(
-           (data.corrections || []).filter(
-           (c: any) => c.original?.trim() !== c.corrected?.trim()
-           )
-           );
-           if (user && isPro && data.result) {
-           await supabase.from('history' as any).insert({
-           user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-           });
-           }
+              (data.corrections || []).filter(
+                (c: any) => c.original?.trim() !== c.corrected?.trim()
+              )
+            );
+            if (user && isPro && data.result) {
+              await supabase.from('history' as any).insert({
+                user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+              });
+            }
             setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
             setFileName(data.fileName);
             toast.success("The Word file has been translated flawlessly!");
@@ -228,17 +262,20 @@ const Editor = () => {
           }
         };
       } else {
-        const { data: { session } } = await supabase.auth.getSession();
         const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
+            ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
           },
-          body: JSON.stringify({ text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined })
+          body: JSON.stringify({ text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined, fingerprint })
         });
         const data = await res.json();
         if (!res.ok) {
+          if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
+            setAnonResetAt(data.resetAt || '');
+            setAnonLimitModalOpen(true); setLoading(false); return;
+          }
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
@@ -253,15 +290,15 @@ const Editor = () => {
 
         setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
         setCorrections(
-       (data.corrections || []).filter(
-       (c: any) => c.original?.trim() !== c.corrected?.trim()
-      )
-      );
-      if (user && isPro && data.result) {
-      await supabase.from('history' as any).insert({
-      user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-       });
-       }
+          (data.corrections || []).filter(
+            (c: any) => c.original?.trim() !== c.corrected?.trim()
+          )
+        );
+        if (user && isPro && data.result) {
+          await supabase.from('history' as any).insert({
+            user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+          });
+        }
         toast.success("Text successfully polished!");
         setLoading(false);
       }
@@ -743,6 +780,56 @@ const Editor = () => {
               : <><Sparkles className="h-4 w-4 mr-2" />Buy 25 Word Credits — €2.99</>}
             </Button>
             <button type="button" onClick={() => setWordCreditModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">Maybe later</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Anonim kullanıcı limit modal */}
+      <Dialog open={anonLimitModalOpen} onOpenChange={setAnonLimitModalOpen}>
+        <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald">
+              <Rocket className="h-7 w-7 text-primary-foreground" />
+            </div>
+            <DialogTitle className="text-center font-display text-2xl">
+              Daily Limit <span className="text-gradient-emerald">Reached</span>
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              You've used your free daily checks. Create a free account to get{" "}
+              <span className="font-semibold text-foreground">5 checks per day</span> and{" "}
+              <span className="font-semibold text-foreground">1 Word file</span> — completely free.
+              {anonResetAt && (
+                <span className="block mt-2 text-xs text-muted-foreground">
+                  Or wait until your limit resets in 24 hours.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
+            <Button
+              variant="emerald"
+              size="lg"
+              className="w-full"
+              onClick={() => { setAnonLimitModalOpen(false); navigate("/signup"); }}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              Create Free Account
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={() => { setAnonLimitModalOpen(false); navigate("/login"); }}
+            >
+              Sign In
+            </Button>
+            <button
+              type="button"
+              onClick={() => setAnonLimitModalOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-smooth"
+            >
+              Maybe later
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -810,7 +810,7 @@ const Editor = () => {
               variant="emerald"
               size="lg"
               className="w-full"
-              onClick={() => { setAnonLimitModalOpen(false); navigate("/signup"); }}
+              onClick={() => { setAnonLimitModalOpen(false); navigate("/register"); }}
             >
               <Sparkles className="h-4 w-4 mr-2" />
               Create Free Account

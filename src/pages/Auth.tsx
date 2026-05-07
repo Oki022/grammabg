@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,15 +85,18 @@ const Auth = ({ mode }: Props) => {
   };
 
   const handleGoogle = async () => {
-    setSubmitting(true);
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/`,
-    });
-    if (error) {
-      toast.error(error.message ?? "Google sign-in failed");
-      setSubmitting(false);
-    }
-  };
+  setSubmitting(true);
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+    },
+  });
+  if (error) {
+    toast.error(error.message ?? "Google sign-in failed");
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-12">

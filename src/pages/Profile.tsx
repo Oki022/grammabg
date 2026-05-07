@@ -208,7 +208,7 @@ const Profile = () => {
                 </div>
                 <Progress value={(usedToday / DAILY_LIMIT) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {remainingCredits > 0 ? `${remainingCredits} left — resets in ${resetIn}` : `Limit reached — resets in ${resetIn}`}
+                  {remainingCredits > 0 ? `${remainingCredits} left` : `Limit reached — resets in ${resetIn}`}
                 </p>
               </div>
             ) : (

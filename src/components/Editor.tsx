@@ -405,7 +405,7 @@ if (user && isPro && data.result) {
   const handleDocxClick = () => docxInputRef.current?.click();
   const handlePdfClick = () => { if (!isPro) { setPdfModalOpen(true); return; } pdfInputRef.current?.click(); };
   const handleUploadClick = (e: React.MouseEvent) => {
-  if (!isPro && (freeWordUsed || wordLimitReached)) { 
+  if (!isPro && !!user && (freeWordUsed || wordLimitReached)) { 
     e.preventDefault(); 
     setWordModalOpen(true); 
     return; 
@@ -587,16 +587,16 @@ if (user && isPro && data.result) {
           <div className="mb-3 flex flex-row flex-wrap items-center justify-end gap-2">
             <button
   onClick={handleUploadClick}
-  disabled={uploading || (!isPro && (freeWordUsed || wordLimitReached))}
+  disabled={uploading || (!isPro && !!user && (freeWordUsed || wordLimitReached))}
   className={`inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition-smooth backdrop-blur
-    ${!isPro && (freeWordUsed || wordLimitReached)
+    ${!isPro && !!user && (freeWordUsed || wordLimitReached)
       ? 'bg-secondary/40 text-muted-foreground/50 cursor-not-allowed opacity-60'
       : 'bg-secondary/80 text-muted-foreground hover:text-foreground hover:bg-secondary'
     } disabled:cursor-not-allowed`}
 >
   <Upload className="h-3.5 w-3.5" />
   {uploading ? "Reading..." : "Upload .docx"}
-  {!isPro && (freeWordUsed || wordLimitReached) && <Lock className="ml-1 h-3 w-3 text-primary/80" />}
+  {!isPro && !!user && (freeWordUsed || wordLimitReached) && <Lock className="ml-1 h-3 w-3 text-primary/80" />}
 </button>
             <button onClick={handlePdfClick} disabled={uploading}
               className="relative inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur">

@@ -260,6 +260,14 @@ const Editor = () => {
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+              if (data.limitReason === 'daily_word_limit') {
+              setFreeWordUsed(true);
+              setWordLimitReached(true);
+              localStorage.setItem('freeWordUsed', 'true');
+              setWordModalOpen(true);
+              setLoading(false);
+              return;
+              }
               toast.error(data.error || 'Limit reached.'); setLoading(false); return;
             }
             if (data && data.error) {
@@ -315,6 +323,14 @@ setLoading(false);
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
+          if (data.limitReason === 'daily_word_limit') {
+          setFreeWordUsed(true);
+          setWordLimitReached(true);
+          localStorage.setItem('freeWordUsed', 'true');
+          setWordModalOpen(true);
+          setLoading(false);
+           return;
+          }
           toast.error(data.error || 'Limit reached.'); setLoading(false); return;
         }
         if (data && data.error) {

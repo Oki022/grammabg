@@ -195,10 +195,16 @@ const Editor = () => {
   }, []);
   useEffect(() => {
   if (user) {
+    // freeWordUsed'ü SILME — Pro kullanıcıysa zaten isPro kontrol ediyor
     localStorage.removeItem('anonRemaining');
-    localStorage.removeItem('freeWordUsed');
+    // Sadece Pro ise word limitini sıfırla
+    if (isPro) {
+      localStorage.removeItem('freeWordUsed');
+      setFreeWordUsed(false);
+      setWordLimitReached(false);
+    }
   }
-}, [user]);
+}, [user, isPro]);
 
   // payment=success kontrolü
   useEffect(() => {

@@ -160,14 +160,14 @@ const Editor = () => {
   const hasInput = !!inputText.trim();
 
   const buttonLabel = isChecking
-    ? "Checking..."
-    : loading ? "Fixing..."
-    : limitReached ? "Upgrade to Pro"
-    : !user
-      ? anonRemaining !== null
-        ? `Fix My Text (${anonRemaining.text}/5 left)`
-        : "Fix My Text"
-      : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
+  ? "Checking..."
+  : loading ? "Fixing..."
+  : limitReached ? "Upgrade to Pro"
+  : !user
+    ? anonRemaining !== null && !docx
+      ? `Fix My Text (${anonRemaining.text}/5 left)`
+      : "Fix My Text"
+    : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
 
   // Fingerprint oluştur
   useEffect(() => {

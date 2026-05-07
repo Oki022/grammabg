@@ -348,17 +348,18 @@ serve(async (req: Request) => {
         const newZipBase64 = await zip.generateAsync({ type: "base64" });
         const previewText = extractPreviewText(updatedXml);
         return new Response(JSON.stringify({
-          result: previewText, fileResult: newZipBase64,
-          fileName: `Corrected_${fileName}`, corrections,
+        result: previewText, fileResult: newZipBase64,
+        fileName: `Corrected_${fileName}`, corrections,
+        anonRemaining: { text: 5 - (anonLimit.text_count ?? 0), word: 1 - (anonLimit.word_count ?? 0) }
         }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+        }
 
       const inputTextAnon = text || "";
       if (!inputTextAnon.trim()) throw new Error('No text provided');
       const { finalText, corrections } = await translateText(inputTextAnon, resolvedToneAnon, OPENAI_API_KEY);
       return new Response(
-        JSON.stringify({ result: finalText, corrections }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ result: finalText, corrections, anonRemaining: { text: 5 - (anonLimit.text_count ?? 0), word: 1 - (anonLimit.word_count ?? 0) } }),
+     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

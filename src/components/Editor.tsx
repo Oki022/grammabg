@@ -158,7 +158,7 @@ const Editor = () => {
   const { user, isPro } = useAuth();
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
-  const limitReached = !isPro && !!user && count >= FREE_LIMIT && !docxInputRef.current?.files?.[0];
+  const limitReached = !isPro && !!user && count >= FREE_LIMIT;
   const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
   const hasInput = !!inputText.trim();
 
@@ -223,6 +223,10 @@ const Editor = () => {
   }, []);
 
   const handleFix = async () => {
+    if (!isPro && docxInputRef.current?.files?.[0] && (freeWordUsed || wordLimitReached)) {
+      setWordModalOpen(true);
+      return;
+    }
     const currentWordFile = docxInputRef.current?.files?.[0];
     if ((!currentWordFile && !inputText) || loading || limitReached) return;
 
@@ -613,14 +617,18 @@ if (user && isPro && data.result) {
 
         {/* ACTION */}
         <div className="flex flex-col items-center gap-3 my-5">
-          <Button variant="emerald" size="lg"
-            disabled={loading || (!limitReached && !hasInput)}
-            onClick={limitReached ? goToPricing : handleFix}
-            className={`min-w-[220px] transition-all duration-300 ${isChecking ? "opacity-70 cursor-wait" : "opacity-100"}`}>
-            {!isChecking && !loading && !limitReached && <Wand2 className="mr-2 h-4 w-4" />}
-            {!isChecking && limitReached && <Rocket className="mr-2 h-4 w-4" />}
-            {buttonLabel}
-          </Button>
+  <Button variant="emerald" size="lg"
+    disabled={loading || (!limitReached && !hasInput) || (!isPro && !!docx && (freeWordUsed || wordLimitReached))}
+    onClick={() => {
+      if (!isPro && docx && (freeWordUsed || wordLimitReached)) { setWordModalOpen(true); return; }
+      if (limitReached) { goToPricing(); return; }
+      handleFix();
+    }}
+    className={`min-w-[220px] transition-all duration-300 ${isChecking ? "opacity-70 cursor-wait" : "opacity-100"}`}>
+    {!isChecking && !loading && !limitReached && <Wand2 className="mr-2 h-4 w-4" />}
+    {!isChecking && limitReached && <Rocket className="mr-2 h-4 w-4" />}
+    {buttonLabel}
+  </Button>
           <p className="text-xs text-muted-foreground">
             {isChecking ? "Checking credits..."
               : !user

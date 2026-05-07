@@ -246,7 +246,7 @@ const Profile = () => {
                 {isPro
                   ? `${PRO_WORD_MONTHLY - wordCount} remaining this month`
                   : wordCount >= FREE_WORD_DAILY
-                    ? `Daily limit reached — resets in ${resetIn}`
+                    ? `Daily limit reached — resets every 24 hours`
                     : `${FREE_WORD_DAILY - wordCount} remaining today`}
               </p>
               {isPro && extraWordCredits > 0 && (

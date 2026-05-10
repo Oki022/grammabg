@@ -74,6 +74,7 @@ CRITICAL RULES:
 - Do NOT add or remove sentences.
 - Do NOT change word order if it is already correct Bulgarian.
 - PRESERVE all line breaks with \\n exactly as in input.
+- Vocative comma: when a sentence begins with a greeting or direct address followed by a name/term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю", "Моля, изпратете".
 
 Return ONLY valid JSON:
 {
@@ -84,6 +85,47 @@ Return ONLY valid JSON:
 }
 
 For corrections: ONLY log actual spelling/grammar errors that were genuinely wrong. If no real errors found — return [].`;
+}
+function buildSystemPrompt(tone: ToneKey): string {
+  return `You are an expert Bulgarian language editor. You receive paragraphs of Bulgarian text and must correct ONLY real errors.
+
+WHAT TO FIX (only genuine errors):
+1. Spelling errors — genuinely misspelled words
+2. Words accidentally split across runs (missing spaces between words)
+3. Missing spaces between words
+4. Clear punctuation errors
+5. Clear grammar errors
+
+WHAT NOT TO CHANGE:
+- Correct text that has no errors — leave it exactly as-is
+- Proper nouns (person names, city names, institution names, abbreviations)
+- Numbers, dates, reference codes
+- Capitalization that is already correct
+- Sentence structure that is already correct Bulgarian
+- Word order that is already natural Bulgarian
+
+CRITICAL — PUNCTUATION:
+- Vocative comma: when a greeting or direct address is followed by a name or term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю".
+
+CRITICAL — BULGARIAN GENDER AGREEMENT:
+- Feminine nouns (мацка, жена, госпожа, майка, etc.) → feminine adjectives: красива, хубава, умна.
+- Masculine nouns → masculine adjectives: красив, хубав, умен.
+- Neuter nouns → neuter adjectives: красиво, хубаво.
+
+${tone !== 'standard' ? TONE_PROFILES[tone] : ''}
+
+OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
+{
+  "paragraphs": [
+    {"corrected": "the fixed paragraph text", "changed": true},
+    {"corrected": "unchanged paragraph", "changed": false}
+  ],
+  "corrections": [
+    {"original": "wrong text", "corrected": "fixed text", "reason": "explanation in English"}
+  ]
+}
+
+For corrections: ONLY include genuinely wrong text that was fixed. If no real errors — return [].`;
 }
 
 function escapeXml(s: string): string {

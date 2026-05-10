@@ -72,6 +72,7 @@ ${TONE_PROFILES[tone]}` : ''}
 CRITICAL RULES:
 - Do NOT change proper nouns, person names, city names, numbers, dates, reference codes.
 - Do NOT add or remove sentences.
+- PRESERVE any leading spaces or indentation at the start of lines — do NOT remove them.
 - Do NOT change word order if it is already correct Bulgarian.
 - PRESERVE all line breaks with \\n exactly as in input.
 - Vocative comma: when a sentence begins with a greeting or direct address followed by a name/term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю", "Моля, изпратете".
@@ -103,6 +104,7 @@ WHAT NOT TO CHANGE:
 - Capitalization that is already correct
 - Sentence structure that is already correct Bulgarian
 - Word order that is already natural Bulgarian
+- Leading spaces or indentation at the start of a paragraph — preserve exactly as-is, do NOT remove them
 
 CRITICAL — PUNCTUATION:
 - Vocative comma: when a greeting or direct address is followed by a name or term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю".

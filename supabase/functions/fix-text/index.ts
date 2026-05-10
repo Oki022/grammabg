@@ -43,43 +43,6 @@ TONE — ACADEMIC (Contemporary Scholarly Bulgarian):
 - Hedging is appropriate: "предполага се", "данните сочат", "може да се твърди".`,
 };
 
-function buildSystemPrompt(tone: ToneKey): string {
-  return `You are an expert Bulgarian language editor. You receive paragraphs of Bulgarian text and must correct ONLY real errors.
-
-WHAT TO FIX (only genuine errors):
-1. Spelling errors — genuinely misspelled words
-2. Words accidentally split across runs (missing spaces between words)
-3. Missing spaces between words
-4. Clear punctuation errors
-5. Clear grammar errors
-
-WHAT NOT TO CHANGE:
-- Correct text that has no errors — leave it exactly as-is
-- Proper nouns (person names, city names, institution names, abbreviations)
-- Numbers, dates, reference codes
-- Capitalization that is already correct
-- Sentence structure that is already correct Bulgarian
-- Word order that is already natural Bulgarian
-
-CRITICAL: If a paragraph has no errors, return it UNCHANGED with "changed": false.
-DO NOT rephrase, rewrite, or "improve" text that is already correct.
-
-${tone !== 'standard' ? TONE_PROFILES[tone] : ''}
-
-OUTPUT FORMAT — return ONLY valid JSON, no markdown, no explanation:
-{
-  "paragraphs": [
-    {"corrected": "the fixed paragraph text", "changed": true},
-    {"corrected": "unchanged paragraph", "changed": false}
-  ],
-  "corrections": [
-    {"original": "wrong text", "corrected": "fixed text", "reason": "explanation in English"}
-  ]
-}
-
-For corrections: ONLY include genuinely wrong text that was fixed. If no real errors — return [].`;
-}
-
 function buildPlainTextPrompt(tone: ToneKey): string {
   return `You are an expert Bulgarian language specialist. Your task:
 
@@ -93,6 +56,15 @@ IF INPUT IS ALREADY BULGARIAN:
 - DO NOT change capitalization unless it is genuinely wrong.
 - Preserve the EXACT structure, line breaks, and formatting of the original text.
 - If text has no errors, return it exactly as-is with corrections as [].
+
+CRITICAL — BULGARIAN GENDER AGREEMENT:
+- Adjectives and past-tense verbs MUST agree with the grammatical gender of the subject noun.
+- Feminine nouns and terms of address (жена, мацка, госпожа, майка, сестра, etc.) → feminine adjectives ending in -а/-я: красива, хубава, умна, добра, щастлива.
+- Masculine nouns → masculine adjectives (no ending): красив, хубав, умен, добър.
+- Neuter nouns → neuter adjectives ending in -о/-е: красиво, хубаво.
+- When a sentence contains BOTH a feminine term of address AND a masculine noun (e.g. "мацка" + "момче"), adjectives must agree with the PERSON being addressed, not with a secondary noun in the sentence.
+- Example: "ти си много красиф мацка" → "ти си много красива мацка" (NOT красив, because мацка is feminine).
+- NEVER change adjective gender unless it is genuinely wrong.
 
 ${tone !== 'standard' ? `TONE ADJUSTMENT (only if translating from another language):
 ${TONE_PROFILES[tone]}` : ''}

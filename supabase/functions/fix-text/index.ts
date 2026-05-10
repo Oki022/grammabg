@@ -204,7 +204,10 @@ async function translateDocx(docXml: string, tone: ToneKey, apiKey: string): Pro
   const nodeReplacements = new Map<number, string>();
   for (let i = 0; i < paragraphs.length; i++) {
     const para = paragraphs[i];
-    const corrected = correctedParas[i]?.corrected ?? para.paraText;
+    const rawCorrected = correctedParas[i]?.corrected ?? para.paraText;
+    const leadingSpace = para.paraText.match(/^(\s*)/)?.[1] ?? '';
+    const trailingSpace = para.paraText.match(/(\s*)$/)?.[1] ?? '';
+    const corrected = leadingSpace + rawCorrected.trim() + trailingSpace;
     const nodes = para.nodes;
     if (nodes.length === 0) continue;
     if (nodes.length === 1) { nodeReplacements.set(nodes[0].nodeIndex, corrected); continue; }

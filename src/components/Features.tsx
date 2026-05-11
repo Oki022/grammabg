@@ -3,18 +3,18 @@ import { CheckCircle2, Languages, FileText } from "lucide-react";
 const features = [
   {
     icon: CheckCircle2,
-    title: "Smart Grammar & Style Fixes",
-    desc: "Go beyond simple typos. Our advanced AI enhances your Bulgarian text for perfect clarity, professional flow, and native-sounding elegance.",
+    title: "Professional Grammar Standard",
+    desc: "Beyond simple typo fixes. GrammaBG corrects grammar, punctuation, and style to meet the standard expected in corporate and legal communication.",
   },
   {
     icon: Languages,
-    title: "Any Language to Bulgarian",
-    desc: "Translate and polish text from ANY language into flawless Bulgarian. Ensure your message remains natural and culturally accurate every time.",
+    title: "Fix the Language. Keep the Structure.",
+    desc: "Unlike standard tools, GrammaBG never touches your formatting. Tables, logos, signatures, and page layout stay exactly as they were.",
   },
   {
     icon: FileText,
-    title: "Smart Document Support",
-    desc: "Fix Word (.docx) files while preserving their original layout. Pro users unlock high-quality PDF exports and cloud-saved History for ultimate productivity.",
+    title: "Word & PDF Document Support",
+    desc: "Upload .docx or PDF files and receive a corrected document in the same format — ready to send, sign, or publish without any reformatting.",
   },
 ];
 

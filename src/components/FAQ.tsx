@@ -7,32 +7,32 @@ import {
 
 const faqs = [
   {
-    q: "How accurate is GrammaBG with Bulgarian grammar?",
-    a: "Our model is trained specifically on Bulgarian language data, including modern usage, idioms, and professional writing. It handles complex grammatical cases that generic AI tools miss.",
+    q: "Does GrammaBG preserve the formatting of my Word and PDF files?",
+    a: "Yes — this is our core differentiator. GrammaBG corrects your Bulgarian text without touching tables, logos, signatures, or page layout. The document you receive back is identical in structure to the one you uploaded.",
   },
   {
-    q: "Does it just fix typos, or improve style too?",
-    a: "Both! GrammaBG corrects spelling and grammar while using advanced AI to restructure sentences, ensuring your writing is clear, professional, and perfectly suited for your audience.",
+    q: "How is GrammaBG different from Google Translate or standard AI tools?",
+    a: "Standard tools break your document's formatting when processing it. GrammaBG is built specifically to separate language correction from document structure — so your corporate layout is never compromised.",
   },
   {
-    q: "What file formats do you support?",
-    a: "You can directly paste text or upload Word (.docx) documents for free. Uploading and exporting complex PDF files is a premium feature available on our Pro plan.",
+    q: "What file formats are supported?",
+    a: "You can paste text directly or upload Word (.docx) documents on the free plan. PDF correction with full layout preservation is available on the Pro plan.",
   },
   {
-    q: "Is there a daily limit?",
-    a: "Free users get 5 AI text corrections and 1 Word (.docx) file fix per day, resetting at midnight. For heavy users, our Pro plan offers completely 200 text corrections, plus a generous monthly quota of 50 Word files and 15 PDF exports. Need more documents processed? You can easily top up with extra credit packages anytime!",
+    q: "Is it accurate enough for legal and corporate documents?",
+    a: "GrammaBG is trained specifically on Bulgarian language data including professional, legal, and academic writing. It handles complex grammatical cases that generic AI tools consistently miss.",
   },
   {
-    q: "Is my text private?",
-    a: "Yes. We never store your texts after correction and never use them for training. Your writing stays yours.",
+    q: "Is my document kept private?",
+    a: "Absolutely. Your documents are never stored after processing and are never used for training. Everything is handled with full confidentiality — built for corporate use.",
+  },
+  {
+    q: "What are the usage limits?",
+    a: "Free users get 5 AI text corrections and 1 Word file fix per day. The Pro plan offers 200 text corrections, 50 Word file fixes, and 15 PDF exports per month — with the option to add extra credits anytime.",
   },
   {
     q: "Can I cancel my Pro plan anytime?",
-    a: "Of course. Cancel with a single click — no questions asked, no hidden fees.",
-  },
-  {
-    q: "Do you support other languages?",
-    a: "We currently support translating FROM any language INTO flawless Bulgarian. Since our AI is exclusively specialized for the Bulgarian language to ensure native-level perfection, we do not translate Bulgarian into other languages. Our focus is 100% on Bulgarian.",
+    a: "Yes. Cancel with a single click — no questions asked, no hidden fees.",
   },
 ];
 

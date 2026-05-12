@@ -4,27 +4,26 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/i18n/LanguageContext";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+
 type PlanId = "free" | "pro" | "yearly";
- 
+
 type Plan = {
   id: PlanId;
-  nameKey: string;
   price: string;
   period: string;
-  descKey: string;
-  featKeys: string[];
-  ctaKey: string;
+  badge?: string;
   highlighted?: boolean;
-  badgeKey?: string;
   stripePriceId?: string;
+  originalPrice?: string;
+  saving?: string;
+  monthlyEquiv?: string;
 };
- 
+
 const handleUpgrade = async (priceId: string) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      alert("Моля, влезте в акаунта си, за да надградите плана.");
+      alert("Authentication Required: Please log in to upgrade your plan.");
       return;
     }
     const response = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/create-checkout-session', {
@@ -45,54 +44,45 @@ const handleUpgrade = async (priceId: string) => {
     alert("The payment process could not be initiated.");
   }
 };
- 
+
 const handleCheckout = async (priceId?: string) => {
   if (!priceId) { window.location.href = '/'; return; }
   await handleUpgrade(priceId);
 };
- 
+
 const plans: Plan[] = [
   {
     id: "free",
-    nameKey: "free",
     price: "€0",
     period: "/mo",
-    descKey: "freeDesc",
-    featKeys: ["freeFeat1", "freeFeat2", "freeFeat3", "freeFeat4"],
-    ctaKey: "getStarted",
   },
   {
     id: "pro",
-    nameKey: "pro",
-    price: "€5.99",
+    price: "€12",
     period: "/mo",
-    descKey: "proDesc",
-    featKeys: ["proFeat1", "proFeat2", "proFeat3", "proFeat4", "proFeat5"],
-    ctaKey: "startPro",
     highlighted: true,
-    badgeKey: "popular",
-    stripePriceId: "price_1TSdcpH7gfnEgeldc8rd1sR5",
+    badge: "popular",
+    stripePriceId: "price_1TWFL9H7gfnEgeldjYyRNeNZ",
   },
   {
     id: "yearly",
-    nameKey: "yearly",
-    price: "€49.99",
+    price: "€99",
     period: "/year",
-    descKey: "yearlyDesc",
-    featKeys: ["yearlyFeat1", "yearlyFeat2", "yearlyFeat3", "yearlyFeat4"],
-    ctaKey: "saveNow",
-    stripePriceId: "price_1TSddXH7gfnEgeldBwm8sfAV",
+    originalPrice: "€144",
+    saving: "31%",
+    monthlyEquiv: "€8.25",
+    stripePriceId: "price_1TWFLnH7gfnEgeldzNaQqiSl",
   }
 ];
- 
+
 const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
- 
+
   const currentPlan: PlanId | null = user
     ? ((user.user_metadata as { plan?: PlanId } | null)?.plan ?? "free")
     : null;
- 
+
   return (
     <section id="pricing" className="container py-12 md:py-20">
       
@@ -106,14 +96,14 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
           </Link>
         </div>
       )}
- 
+
       <div className="text-center mb-14">
         <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">
           {t.pricing.title} <span className="text-gradient-emerald">{t.pricing.titleAccent}</span>
         </h2>
         <p className="text-muted-foreground max-w-xl mx-auto">{t.pricing.subtitle}</p>
       </div>
- 
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
         {plans.map((p) => {
           const isCurrent = currentPlan === p.id;
@@ -127,20 +117,30 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                   : "border-border bg-card/60 hover:border-primary/30"
               }`}
             >
-              {p.badgeKey && (
+              {p.badge && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-emerald px-3 py-1 text-xs font-semibold text-primary-foreground shadow-emerald">
                   {t.pricing.popular}
                 </span>
               )}
- 
+
               <h3 className="font-display text-xl font-semibold mb-1">{plan.name}</h3>
               <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
- 
-              <div className="flex items-end gap-1 mb-6">
+
+              <div className="flex items-end gap-1 mb-1">
                 <span className="font-display text-4xl md:text-5xl font-bold tracking-tight">{p.price}</span>
                 <span className="text-muted-foreground mb-1.5">{p.period}</span>
               </div>
- 
+
+              {/* Yıllık plan için ekstra bilgi */}
+              {p.originalPrice && (
+                <div className="flex items-center gap-2 mb-6">
+                  <span className="text-sm text-muted-foreground line-through">{p.originalPrice}</span>
+                  <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">-{p.saving}</span>
+                  <span className="text-xs text-muted-foreground">{p.monthlyEquiv}/mo</span>
+                </div>
+              )}
+              {!p.originalPrice && <div className="mb-6" />}
+
               <ul className="space-y-3 mb-8 flex-1">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm">
@@ -151,7 +151,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                   </li>
                 ))}
               </ul>
- 
+
               <Button
                 variant={isCurrent ? "secondary" : p.highlighted ? "emerald" : "outline"}
                 size="lg"
@@ -168,5 +168,5 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
     </section>
   );
 };
- 
+
 export default Pricing;

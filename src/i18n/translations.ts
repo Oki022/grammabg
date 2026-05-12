@@ -147,8 +147,8 @@ export const translations = {
       currentPlan: "Текущ план",
       plans: {
         free: { name: "Безплатен план", desc: "Перфектен за изпробване на услугата.", cta: "Започни сега", features: ["5 проверки на ден", "1 Word (.docx) поправка на ден", "Стандартни граматически корекции", "Без PDF поддръжка"] },
-        pro: { name: "Pro план", desc: "Разширени инструменти с щедри месечни квоти.", cta: "Започни Pro сега", features: ["200 кредита на месец", "50 Word (.docx) поправки на месец", "15 PDF експорта на месец", "Приоритетна обработка", "Пълна история на корекциите"] },
-        yearly: { name: "Годишен Pro", desc: "Най-добрата стойност.", cta: "Спести сега", features: ["Всички Pro функции", "🚀 Отключи 'Ultimate' двигател", "Приоритетна клиентска поддръжка", "Вземи 2 месеца БЕЗПЛАТНО!"] },
+        pro: { name: "Pro план", desc: "Разширени инструменти с щедри месечни квоти.", cta: "Започни Pro — €12/мес", features: ["200 кредита на месец", "50 Word (.docx) поправки на месец", "15 PDF експорта на месец", "Приоритетна обработка", "Пълна история на корекциите"] },
+        yearly: { name: "Годишен Pro", desc: "€8.25/мес — спестете 31%", cta: "Спести сега", features: ["Всички Pro функции", "🚀 Отключи 'Ultimate' двигател", "Приоритетна клиентска поддръжка", "Вземи 2 месеца БЕЗПЛАТНО!"] },
       },
     },
     editor: {
@@ -360,8 +360,8 @@ export const translations = {
       currentPlan: "Current Plan",
       plans: {
         free: { name: "Free Plan", desc: "Perfect for trying out the service.", cta: "Get Started", features: ["5 checks per day", "1 Word (.docx) file fix per day", "Standard grammar fixes", "No PDF support"] },
-        pro: { name: "Pro Plan", desc: "Advanced tools with generous monthly quotas.", cta: "Start Pro Now", features: ["200 Credits per month", "50 Word (.docx) fixes per month", "15 PDF exports per month", "Priority Processing", "Full Correction History"] },
-        yearly: { name: "Yearly Pro", desc: "Ultimate experience & best value.", cta: "Save Now", features: ["All Pro Plan features", "🚀 Unlock 'Ultimate' Engine", "Priority customer support", "Get 2 Months FREE!"] },
+        pro: { name: "Pro Plan", desc: "Advanced tools with generous monthly quotas.", cta: "Start Pro — €12/mo", features: ["200 Credits per month", "50 Word (.docx) fixes per month", "15 PDF exports per month", "Priority Processing", "Full Correction History"] },
+        yearly: { name: "Yearly Pro", desc: "€8.25/mo — save 31%", cta: "Save Now", features: ["All Pro Plan features", "🚀 Unlock 'Ultimate' Engine", "Priority customer support", "Get 2 Months FREE!"] },
       },
     },
     editor: {

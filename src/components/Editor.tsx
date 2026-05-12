@@ -178,8 +178,7 @@ const Editor = () => {
     ? anonRemaining !== null && !docx
       ? `${t.editor.fixMyText} (${anonRemaining.text}/5)`
       : t.editor.fixMyText
-    : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
-
+    : isPro ? t.buttons.fixText : `${t.buttons.fixText} (${remaining})`;
   // Fingerprint oluştur
   useEffect(() => {
     const generateFingerprint = async () => {

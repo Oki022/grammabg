@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Mail, User as UserIcon, Gauge, CreditCard, ArrowLeft, Clock, FileText, FileType2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -30,6 +31,7 @@ const formatCountdown = () => {
 const Profile = () => {
   const navigate = useNavigate();
   const { user, loading, isPro } = useAuth();
+  const { t } = useLanguage();
   const [resetIn, setResetIn] = useState(formatCountdown);
   const [remainingCredits, setRemainingCredits] = useState<number>(DAILY_LIMIT);
   const [textCount, setTextCount] = useState<number>(0);
@@ -50,9 +52,10 @@ const Profile = () => {
 
   const planLabel = isPro
     ? meta?.plan === 'yearly'
-      ? (isCanceling ? "Yearly Pro (Canceling)" : "Yearly Pro Plan")
-      : (isCanceling ? "Pro (Canceling)" : "Pro Plan")
-    : "Free Plan";
+      ? (isCanceling ? t.profile.yearlyProCanceling : t.profile.yearlyPro)
+      : (isCanceling ? t.profile.proCanceling : t.profile.proPlan)
+    : t.profile.freePlan;
+
   const usedToday = isPro ? 0 : DAILY_LIMIT - remainingCredits;
 
   const handleCancelSubscription = async () => {
@@ -123,7 +126,7 @@ const Profile = () => {
   if (loading || !user || fetchingCredits) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-muted-foreground">
-        Loading…
+        {t.profile.loading}
       </div>
     );
   }
@@ -138,7 +141,7 @@ const Profile = () => {
           <Logo />
           <Link to="/">
             <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" /> Back
+              <ArrowLeft className="h-4 w-4 mr-2" /> {t.profile.back}
             </Button>
           </Link>
         </div>
@@ -147,11 +150,9 @@ const Profile = () => {
       <main className="container max-w-3xl py-12 md:py-16 space-y-6">
         <div>
           <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight">
-            Your <span className="text-gradient-emerald">profile</span>
+            {t.profile.title} <span className="text-gradient-emerald">{t.profile.titleAccent}</span>
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Manage your account, usage and subscription.
-          </p>
+          <p className="text-muted-foreground mt-2 text-sm">{t.profile.subtitle}</p>
         </div>
 
         {/* Account */}
@@ -161,20 +162,20 @@ const Profile = () => {
               {initial}
             </div>
             <div className="min-w-0">
-              <h2 className="font-display text-lg font-semibold">Account</h2>
-              <p className="text-xs text-muted-foreground">Your basic information</p>
+              <h2 className="font-display text-lg font-semibold">{t.profile.account}</h2>
+              <p className="text-xs text-muted-foreground">{t.profile.accountSubtitle}</p>
             </div>
           </div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-                <UserIcon className="h-3.5 w-3.5" /> User Name
+                <UserIcon className="h-3.5 w-3.5" /> {t.profile.userName}
               </div>
               <p className="mt-1.5 font-medium truncate">{displayName}</p>
             </div>
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
-                <Mail className="h-3.5 w-3.5" /> Email
+                <Mail className="h-3.5 w-3.5" /> {t.labels.email}
               </div>
               <p className="mt-1.5 font-medium truncate">{user.email}</p>
             </div>
@@ -188,44 +189,45 @@ const Profile = () => {
               <Gauge className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-display text-lg font-semibold">Usage</h2>
+              <h2 className="font-display text-lg font-semibold">{t.profile.usage}</h2>
               <div className="text-xs text-muted-foreground">
-                {isPro ? <span className="text-emerald-500 font-medium">Pro Plan — Monthly limits</span> : <span>Free Plan — Daily limits</span>}
+                {isPro
+                  ? <span className="text-emerald-500 font-medium">{t.profile.proPlanMonthly}</span>
+                  : <span>{t.profile.freePlanDaily}</span>}
               </div>
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
-
             {/* Text */}
             {!isPro ? (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <Gauge className="h-4 w-4 text-primary" /> Text Corrections
+                    <Gauge className="h-4 w-4 text-primary" /> {t.profile.textCorrections}
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{usedToday}/{DAILY_LIMIT} used today</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{usedToday}/{DAILY_LIMIT} {t.profile.usedToday}</span>
                 </div>
                 <Progress value={(usedToday / DAILY_LIMIT) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {remainingCredits > 0 ? `${remainingCredits} left` : `Limit reached — resets every 24 hours`}
+                  {remainingCredits > 0 ? `${remainingCredits} ${t.profile.remainingToday}` : t.profile.limitReachedDaily}
                 </p>
               </div>
             ) : (
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <Gauge className="h-4 w-4 text-primary" /> Text Corrections
+                    <Gauge className="h-4 w-4 text-primary" /> {t.profile.textCorrections}
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{textCount}/{PRO_TEXT_MONTHLY} used</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{textCount}/{PRO_TEXT_MONTHLY} {t.profile.used}</span>
                 </div>
                 <Progress value={(textCount / PRO_TEXT_MONTHLY) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {PRO_TEXT_MONTHLY - textCount > 0 ? `${PRO_TEXT_MONTHLY - textCount} remaining this month` : "Monthly limit reached"}
+                  {PRO_TEXT_MONTHLY - textCount > 0 ? `${PRO_TEXT_MONTHLY - textCount} ${t.profile.remainingMonth}` : t.profile.limitReachedMonthly}
                 </p>
                 {extraTextCredits > 0 && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                    +{extraTextCredits} extra credits available
+                    +{extraTextCredits} {t.profile.extraCredits}
                   </div>
                 )}
               </div>
@@ -235,23 +237,23 @@ const Profile = () => {
             <div className="rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <FileText className="h-4 w-4 text-primary" /> Word Files (.docx)
+                  <FileText className="h-4 w-4 text-primary" /> {t.profile.wordFiles}
                 </div>
                 <span className="text-xs text-muted-foreground tabular-nums">
-                  {wordCount}/{isPro ? PRO_WORD_MONTHLY : FREE_WORD_DAILY} used
+                  {wordCount}/{isPro ? PRO_WORD_MONTHLY : FREE_WORD_DAILY} {t.profile.used}
                 </span>
               </div>
               <Progress value={isPro ? (wordCount / PRO_WORD_MONTHLY) * 100 : (wordCount / FREE_WORD_DAILY) * 100} className="h-1.5" />
               <p className="mt-2 text-[11px] text-muted-foreground">
                 {isPro
-                  ? `${PRO_WORD_MONTHLY - wordCount} remaining this month`
+                  ? `${PRO_WORD_MONTHLY - wordCount} ${t.profile.remainingMonth}`
                   : wordCount >= FREE_WORD_DAILY
-                    ? `Daily limit reached — resets every 24 hours`
-                    : `${FREE_WORD_DAILY - wordCount} remaining today`}
+                    ? t.profile.limitReachedDaily
+                    : `${FREE_WORD_DAILY - wordCount} ${t.profile.remainingToday}`}
               </p>
               {isPro && extraWordCredits > 0 && (
                 <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                  +{extraWordCredits} extra credits available
+                  +{extraWordCredits} {t.profile.extraCredits}
                 </div>
               )}
             </div>
@@ -261,17 +263,17 @@ const Profile = () => {
               <div className="rounded-xl border border-border/60 bg-background/40 p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileType2 className="h-4 w-4 text-primary" /> PDF Files
+                    <FileType2 className="h-4 w-4 text-primary" /> {t.profile.pdfFiles}
                   </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{pdfCount}/{PRO_PDF_MONTHLY} used</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{pdfCount}/{PRO_PDF_MONTHLY} {t.profile.used}</span>
                 </div>
                 <Progress value={(pdfCount / PRO_PDF_MONTHLY) * 100} className="h-1.5" />
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  {PRO_PDF_MONTHLY - pdfCount > 0 ? `${PRO_PDF_MONTHLY - pdfCount} remaining this month` : "Monthly limit reached"}
+                  {PRO_PDF_MONTHLY - pdfCount > 0 ? `${PRO_PDF_MONTHLY - pdfCount} ${t.profile.remainingMonth}` : t.profile.limitReachedMonthly}
                 </p>
                 {extraPdfCredits > 0 && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-                    +{extraPdfCredits} extra credits available
+                    +{extraPdfCredits} {t.profile.extraCredits}
                   </div>
                 )}
               </div>
@@ -279,15 +281,14 @@ const Profile = () => {
               <div className="rounded-xl border border-border/60 bg-background/40 p-4 opacity-60">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileType2 className="h-4 w-4" /> PDF Files
+                    <FileType2 className="h-4 w-4" /> {t.profile.pdfFiles}
                   </div>
                   <Link to="/pricing">
-                    <span className="text-[11px] text-primary underline cursor-pointer">Pro only</span>
+                    <span className="text-[11px] text-primary underline cursor-pointer">{t.profile.proOnly}</span>
                   </Link>
                 </div>
               </div>
             )}
-
           </div>
         </Card>
 
@@ -298,36 +299,36 @@ const Profile = () => {
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-display text-lg font-semibold">Subscription Management</h2>
-              <p className="text-xs text-muted-foreground">Your active plan</p>
+              <h2 className="font-display text-lg font-semibold">{t.profile.subscription}</h2>
+              <p className="text-xs text-muted-foreground">{t.profile.currentPlan}</p>
             </div>
           </div>
 
           <div className="mt-5 flex flex-col gap-4 rounded-xl border border-border/60 bg-background/40 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Current plan</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.profile.currentPlan}</p>
                 <p className="mt-1 font-display text-xl font-semibold">{planLabel}</p>
               </div>
               {!isPro ? (
                 <Link to="/pricing">
-                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Upgrade to Pro</Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">{t.profile.upgradeToPro}</Button>
                 </Link>
               ) : isCanceling ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-secondary/60 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  <Clock className="h-3 w-3" /> Canceling
+                  <Clock className="h-3 w-3" /> {t.profile.canceling}
                 </span>
               ) : (
                 <Button variant="outline" className="border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleCancelSubscription}>
-                  Cancel Subscription
+                  {t.profile.cancelSubscription}
                 </Button>
               )}
             </div>
 
             {isCanceling && (
               <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground">
-                Your Pro plan is active for <span className="font-semibold text-foreground">{daysLeft} more days</span>. After that you'll be moved to the Free plan.
-                <button onClick={handleReactivate} className="ml-2 text-primary underline hover:no-underline font-medium">Reactivate</button>
+                {t.profile.cancelingMsg} <span className="font-semibold text-foreground">{daysLeft}</span> {t.profile.cancelingMsg2}
+                <button onClick={handleReactivate} className="ml-2 text-primary underline hover:no-underline font-medium">{t.profile.reactivate}</button>
               </div>
             )}
           </div>

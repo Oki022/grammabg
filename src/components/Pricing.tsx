@@ -1,40 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { Check, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
+import { toast } from "sonner";
 type PlanId = "free" | "pro" | "yearly";
-
+ 
 type Plan = {
   id: PlanId;
-  name: string;
+  nameKey: string;
   price: string;
   period: string;
-  description: string;
-  features: string[];
-  cta: string;
+  descKey: string;
+  featKeys: string[];
+  ctaKey: string;
   highlighted?: boolean;
-  badge?: string;
+  badgeKey?: string;
   stripePriceId?: string;
 };
-
-// --- FONKSİYONLAR ---
-
+ 
 const handleUpgrade = async (priceId: string) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-
     if (!session) {
-      // Karışık dilli alert yerine temiz bir İngilizce mesaj
-      alert("Authentication Required: Please log in to upgrade your plan.");
-      // Opsiyonel: Kullanıcıyı direkt giriş sayfasına atabilirsin
-      // window.location.href = "/auth"; 
+      alert("Моля, влезте в акаунта си, за да надградите плана.");
       return;
     }
-    // ... geri kalan kod
-
-    // 2. Ödeme oturumu oluşturmak için fonksiyonu çağırıyoruz
     const response = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/create-checkout-session', {
       method: 'POST',
       headers: {
@@ -43,95 +35,64 @@ const handleUpgrade = async (priceId: string) => {
       },
       body: JSON.stringify({ priceId }),
     });
-
     const data = await response.json();
-
     if (data.url) {
-      // Stripe ödeme sayfasına yönlendir
       window.location.href = data.url;
     } else {
-      console.error("Stripe URL alınamadı:", data);
       alert("A problem occurred while going to the payment page.");
     }
   } catch (error) {
-    console.error("Ödeme hatası:", error);
     alert("The payment process could not be initiated.");
   }
 };
-
+ 
 const handleCheckout = async (priceId?: string) => {
-  if (!priceId) {
-    console.log("This is a free plan, no payment needed.");
-    // Ücretsiz plan ise direkt ana sayfaya veya profile atabilirsin
-    window.location.href = '/';
-    return;
-  }
-  
-  // Ücretli plan ise upgrade fonksiyonunu tetikle
+  if (!priceId) { window.location.href = '/'; return; }
   await handleUpgrade(priceId);
 };
-
-// --- PLAN VERİLERİ ---
-
+ 
 const plans: Plan[] = [
   {
     id: "free",
-    name: "Free Plan",
+    nameKey: "free",
     price: "€0",
     period: "/mo",
-    description: "Perfect for trying out the AI.",
-    features: [
-      "5 AI text checks per day",
-      "1 Word (.docx) file fix per day",
-      "Standard grammar fixes", 
-      "No PDF support"
-    ],
-    cta: "Get Started",
+    descKey: "freeDesc",
+    featKeys: ["freeFeat1", "freeFeat2", "freeFeat3", "freeFeat4"],
+    ctaKey: "getStarted",
   },
   {
     id: "pro",
-    name: "Pro Plan",
+    nameKey: "pro",
     price: "€5.99",
     period: "/mo",
-    description: "Advanced AI tools with generous monthly quotas.",
-    features: [
-      "200 Credits per month",
-      "50 Word (.docx) fixes per month", // (Tüm geçmişi saklama özelliği varsa en mantıklısı bu)
-      "15 PDF exports per month", // (Daha detaylı analiz anlamına gelir)
-      "Priority AI Processing", // (Daha hızlı sonuç alma vurgusu)
-      "Full Correction History" // (Geçmişe vurgu yapmaya devam etmek için)
-    ],
-    cta: "Start Pro Now",
+    descKey: "proDesc",
+    featKeys: ["proFeat1", "proFeat2", "proFeat3", "proFeat4", "proFeat5"],
+    ctaKey: "startPro",
     highlighted: true,
-    badge: "Popular",
+    badgeKey: "popular",
     stripePriceId: "price_1TSdcpH7gfnEgeldc8rd1sR5",
   },
   {
     id: "yearly",
-    name: "Yearly Pro",
+    nameKey: "yearly",
     price: "€49.99",
     period: "/year",
-    description: "Ultimate experience & best value.",
-    features: [
-      "All Pro Plan features", 
-      "🚀 Unlock 'Ultimate AI' Engine", 
-      "Priority customer support", 
-      "Get 2 Months FREE!"
-    ],
-    cta: "Save Now",
+    descKey: "yearlyDesc",
+    featKeys: ["yearlyFeat1", "yearlyFeat2", "yearlyFeat3", "yearlyFeat4"],
+    ctaKey: "saveNow",
     stripePriceId: "price_1TSddXH7gfnEgeldBwm8sfAV",
   }
 ];
-
-// --- COMPONENT ---
-
+ 
 const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
   const { user } = useAuth();
-
+  const { t } = useLanguage();
+ 
   const currentPlan: PlanId | null = user
     ? ((user.user_metadata as { plan?: PlanId } | null)?.plan ?? "free")
     : null;
-
+ 
   return (
     <section id="pricing" className="container py-12 md:py-20">
       
@@ -140,24 +101,23 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
           <Link to="/profile">
             <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {t.common.back}
             </Button>
           </Link>
         </div>
       )}
-
+ 
       <div className="text-center mb-14">
         <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">
-          Plans that fit your <span className="text-gradient-emerald">scale</span>
+          {t.pricing.title} <span className="text-gradient-emerald">{t.pricing.titleAccent}</span>
         </h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Start for free. Upgrade when you need more power.
-        </p>
+        <p className="text-muted-foreground max-w-xl mx-auto">{t.pricing.subtitle}</p>
       </div>
-
+ 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto items-stretch">
         {plans.map((p) => {
           const isCurrent = currentPlan === p.id;
+          const plan = t.pricing.plans[p.id];
           return (
             <div
               key={p.id}
@@ -167,22 +127,22 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                   : "border-border bg-card/60 hover:border-primary/30"
               }`}
             >
-              {p.badge && (
+              {p.badgeKey && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center rounded-full bg-gradient-emerald px-3 py-1 text-xs font-semibold text-primary-foreground shadow-emerald">
-                  {p.badge}
+                  {t.pricing.popular}
                 </span>
               )}
-
-              <h3 className="font-display text-xl font-semibold mb-1">{p.name}</h3>
-              <p className="text-sm text-muted-foreground mb-6">{p.description}</p>
-
+ 
+              <h3 className="font-display text-xl font-semibold mb-1">{plan.name}</h3>
+              <p className="text-sm text-muted-foreground mb-6">{plan.desc}</p>
+ 
               <div className="flex items-end gap-1 mb-6">
                 <span className="font-display text-4xl md:text-5xl font-bold tracking-tight">{p.price}</span>
                 <span className="text-muted-foreground mb-1.5">{p.period}</span>
               </div>
-
+ 
               <ul className="space-y-3 mb-8 flex-1">
-                {p.features.map((f) => (
+                {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2.5 text-sm">
                     <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${p.highlighted ? "bg-primary text-primary-foreground" : "bg-secondary text-primary"}`}>
                       <Check className="h-3 w-3" strokeWidth={3} />
@@ -191,7 +151,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                   </li>
                 ))}
               </ul>
-
+ 
               <Button
                 variant={isCurrent ? "secondary" : p.highlighted ? "emerald" : "outline"}
                 size="lg"
@@ -199,7 +159,7 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                 disabled={isCurrent}
                 onClick={() => handleCheckout(p.stripePriceId)}
               >
-                {isCurrent ? "Current Plan" : p.cta}
+                {isCurrent ? t.pricing.currentPlan : plan.cta}
               </Button>
             </div>
           );
@@ -208,5 +168,5 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
     </section>
   );
 };
-
+ 
 export default Pricing;

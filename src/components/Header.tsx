@@ -3,58 +3,58 @@ import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/i18n/LanguageContext";
 import { toast } from "sonner";
-
-const links = [
-  { href: "/#editor", label: "Editor" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/#faq", label: "FAQ" },
-  { href: "/contact", label: "Contact" },
-];
-
+ 
 const Header = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-
+  const { t } = useLanguage();
+ 
+  const links = [
+    { href: "/#editor", label: t.nav.editor },
+    { href: "/#pricing", label: t.nav.pricing },
+    { href: "/#faq", label: t.nav.faq },
+    { href: "/contact", label: t.nav.contact },
+  ];
+ 
   // Scroll Mantığı (Tamamen yenilendi ve hatasızlaştırıldı)
   useEffect(() => {
     let lastScrollY = window.scrollY;
-
+ 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-
+ 
       if (currentScrollY < 50) {
-        // Sayfanın en üstündeyken her zaman göster
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY) {
-        // Aşağı doğru kaydırıyorsan gizle
         setIsVisible(false);
       } else {
-        // Yukarı doğru kaydırıyorsan anında göster
         setIsVisible(true);
       }
-
+ 
       lastScrollY = currentScrollY;
     };
-
+ 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
+ 
   const handleSignOut = async () => {
     await signOut();
-    toast.success("Signed out");
+    toast.success(t.success.signedOut);
     setOpen(false);
   };
-
+ 
   const userInitial = (user?.user_metadata?.display_name || user?.email || "?")
     .charAt(0)
     .toUpperCase();
-
+ 
   return (
     <header
       className={`fixed top-0 z-50 w-full border-b border-white/10 bg-transparent backdrop-blur-xl transition-transform duration-300 ${
@@ -63,8 +63,8 @@ const Header = () => {
     >
       <div className="container flex h-16 items-center justify-between">
         <Logo />
-
-        <nav className="hidden md:flex items-center gap-8">
+ 
+        <nav className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
           {links.map((l) => (
             <a
               key={l.href}
@@ -75,8 +75,9 @@ const Header = () => {
             </a>
           ))}
         </nav>
-
+ 
         <div className="hidden md:flex items-center gap-2">
+          <LanguageSwitcher />
           <ThemeToggle />
           {user ? (
             <>
@@ -89,22 +90,23 @@ const Header = () => {
                 <UserIcon className="h-4 w-4" strokeWidth={2.25} />
               </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" /> Sign out
+                <LogOut className="h-4 w-4" /> {t.nav.signout}
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
-                Log in
+                {t.nav.login}
               </Button>
               <Button variant="emerald" size="sm" onClick={() => navigate("/register")}>
-                Sign up
+                {t.nav.signup}
               </Button>
             </>
           )}
         </div>
-
+ 
         <div className="md:hidden flex items-center gap-1">
+          <LanguageSwitcher />
           <ThemeToggle />
           <button
             aria-label="Toggle menu"
@@ -115,7 +117,7 @@ const Header = () => {
           </button>
         </div>
       </div>
-
+ 
       {open && (
         <div className="md:hidden border-t border-white/10 bg-[#050505]/95 backdrop-blur-xl">
           <div className="container py-4 flex flex-col gap-3">
@@ -134,20 +136,20 @@ const Header = () => {
                 <>
                   <Link to="/profile" className="flex-1" onClick={() => setOpen(false)}>
                     <Button variant="outline" size="sm" className="w-full">
-                      <UserIcon className="h-4 w-4 mr-2" /> Profile
+                      <UserIcon className="h-4 w-4 mr-2" /> {t.nav.profile}
                     </Button>
                   </Link>
                   <Button variant="ghost" size="sm" className="flex-1" onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4 mr-2" /> Sign out
+                    <LogOut className="h-4 w-4 mr-2" /> {t.nav.signout}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full text-foreground">Log in</Button>
+                    <Button variant="ghost" size="sm" className="w-full text-foreground">{t.nav.login}</Button>
                   </Link>
                   <Link to="/register" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button variant="emerald" size="sm" className="w-full">Sign up</Button>
+                    <Button variant="emerald" size="sm" className="w-full">{t.nav.signup}</Button>
                   </Link>
                 </>
               )}
@@ -158,5 +160,5 @@ const Header = () => {
     </header>
   );
 };
-
+ 
 export default Header;

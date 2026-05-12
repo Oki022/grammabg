@@ -8,6 +8,7 @@ import * as pdfjsLib from "pdfjs-dist";
 import JSZip from "jszip";
 import jsPDF from "jspdf";
 import HistoryDrawer from "@/components/HistoryDrawer";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 import { 
   Copy, Rocket, Upload, Wand2, FileText, FileType2,
@@ -162,6 +163,7 @@ const Editor = () => {
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const { user, isPro } = useAuth();
+  const { t } = useLanguage();
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
   const limitReached = !isPro && !!user && count >= FREE_LIMIT;
@@ -169,13 +171,13 @@ const Editor = () => {
   const hasInput = !!inputText.trim();
 
   const buttonLabel = isChecking
-  ? "Checking..."
-  : loading ? "Fixing..."
-  : limitReached ? "Upgrade to Pro"
-  : !user
+  ? t.editor.checkingCredits
+  : loading ? t.editor.fixing
+  : limitReached ? t.editor.upgradeToPro
+: !user
     ? anonRemaining !== null && !docx
-      ? `Fix My Text (${anonRemaining.text}/5 left)`
-      : "Fix My Text"
+      ? `${t.editor.fixMyText} (${anonRemaining.text}/5)`
+      : t.editor.fixMyText
     : `Fix Text (${isPro ? 'Pro' : remaining + ' left'})`;
 
   // Fingerprint oluştur
@@ -565,10 +567,10 @@ if (user && isPro && data.result) {
   return (
     <section id="editor" className="container py-16 md:py-24">
       <div className="text-center mb-10">
-        <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">The Editor</h2>
+        <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">{t.editor.title}</h2>
         <p className="text-muted-foreground max-w-xl mx-auto">
-          Paste text in ANY language or upload your documents. Watch our AI instantly translate and polish it into flawless Bulgarian perfectly.
-        </p>
+  {t.editor.subtitle}
+</p>
       </div>
 
       <div className="relative mx-auto max-w-4xl rounded-2xl border border-border bg-gradient-card p-4 md:p-6 shadow-card-premium backdrop-blur">
@@ -607,18 +609,18 @@ if (user && isPro && data.result) {
     } disabled:cursor-not-allowed`}
 >
   <Upload className="h-3.5 w-3.5" />
-  {uploading ? "Reading..." : "Upload .docx"}
+  {uploading ? t.common.processing : "Upload .docx"}
   {((!isPro && !!user && (freeWordUsed || wordLimitReached)) || (!user && anonRemaining?.word === 0)) && <Lock className="ml-1 h-3 w-3 text-primary/80" />}
 </button>
             <button onClick={handlePdfClick} disabled={uploading}
               className="relative inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur">
               <FileType2 className="h-3.5 w-3.5" />
-              {uploading ? "Reading..." : "Upload .pdf"}
+              {uploading ? t.editor.reading : "Upload .pdf"}
               {!isPro && <Lock className="h-3 w-3 text-primary/80" />}
             </button>
             <button onClick={handleClear} disabled={!inputText && !outputText && !docx}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/60 disabled:opacity-40 disabled:cursor-not-allowed transition-smooth">
-              <RotateCcw className="h-3.5 w-3.5" /> Clear
+              <RotateCcw className="h-3.5 w-3.5" /> {t.buttons.clear}
             </button>
           </div>
 
@@ -626,14 +628,14 @@ if (user && isPro && data.result) {
           <input ref={pdfInputRef} type="file" accept=".pdf,application/pdf" onChange={handlePdfChange} className="hidden" />
 
           <div className="relative">
-            <label className="absolute -top-2 left-4 px-2 bg-card text-[11px] uppercase tracking-wider text-muted-foreground font-semibold z-10">Your text</label>
+            <label className="absolute -top-2 left-4 px-2 bg-card text-[11px] uppercase tracking-wider text-muted-foreground font-semibold z-10">{t.labels.yourText}</label>
             <textarea value={inputText} onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste your text in ANY language or upload a .docx / .pdf file..."
+              placeholder={t.editor.placeholder}
               className="w-full min-h-[200px] md:min-h-[220px] rounded-xl bg-input/60 border border-border p-4 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-smooth resize-y" />
           </div>
           <div className="mt-2 flex items-center justify-between gap-3 text-xs">
             <div className="text-muted-foreground">
-              {docx && (<>📄 Loaded: <span className="text-foreground">{docx.fileName}.docx</span> — original formatting will be preserved on download.</>)}
+              {docx && (<>📄 {t.editor.loaded} <span className="text-foreground">{docx.fileName}.docx</span> — {t.editor.formattingPreserved}</>)}
             </div>
             <div className="inline-flex items-center gap-3 text-muted-foreground tabular-nums shrink-0">
               <span><span className="text-foreground font-semibold">{inputText.trim() ? inputText.trim().split(/\s+/).length : 0}</span> words</span>
@@ -658,25 +660,25 @@ if (user && isPro && data.result) {
     {buttonLabel}
   </Button>
           <p className="text-xs text-muted-foreground">
-            {isChecking ? "Checking credits..."
-              : !user
-                ? anonRemaining !== null
-                  ? `${anonRemaining.text} free check${anonRemaining.text === 1 ? "" : "s"} left today`
-                  : "5 free checks per day — no account needed"
-                : limitReached ? "You've used all 5 free checks today."
-                : `${remaining} free check${remaining === 1 ? "" : "s"} left`}
-          </p>
+  {isChecking ? t.editor.checkingCredits
+    : !user
+      ? anonRemaining !== null
+        ? `${anonRemaining.text} ${t.editor.freeChecksLeft}`
+        : t.editor.noAccountNeeded
+      : limitReached ? t.editor.usedAllChecks
+      : `${remaining} ${t.editor.checksLeft}`}
+</p>
         </div>
 
         {/* OUTPUT */}
         <div className="relative">
-          <label className="absolute -top-2 left-4 px-2 bg-card text-[11px] uppercase tracking-wider text-muted-foreground font-semibold z-10">Perfect version</label>
+          <label className="absolute -top-2 left-4 px-2 bg-card text-[11px] uppercase tracking-wider text-muted-foreground font-semibold z-10">{t.labels.perfectVersion}</label>
           <button onClick={handleCopy} disabled={!outputText}
             className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur">
-            <Copy className="h-3.5 w-3.5" /> Copy
+            <Copy className="h-3.5 w-3.5" /> {t.buttons.copy}
           </button>
           <textarea value={outputText} readOnly
-            placeholder="Your corrected and professionally polished Bulgarian text will appear here..."
+            placeholder={t.editor.outputPlaceholder}
             className="w-full min-h-[200px] md:min-h-[220px] rounded-xl bg-input/40 border border-border p-4 pr-20 text-foreground resize-y" />
 
           <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
@@ -684,7 +686,7 @@ if (user && isPro && data.result) {
               <DropdownMenuTrigger asChild>
                 <button disabled={!outputText}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-smooth backdrop-blur">
-                  <Download className="h-3.5 w-3.5" /> Export <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                  <Download className="h-3.5 w-3.5" /> {t.buttons.export} <ChevronDown className="h-3.5 w-3.5 opacity-70" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44 bg-popover border-border">
@@ -750,10 +752,10 @@ if (user && isPro && data.result) {
             onClick={correctedFileBase64 ? handleDownloadWord : handleDownloadPdf}
             className="w-full sm:w-auto px-4 text-sm sm:text-base flex items-center justify-center">
             <FileText className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">Download Corrected Version</span>
+            <span className="truncate">{t.editor.downloadCorrected}</span>
             <ChevronDown className="ml-2 h-4 w-4 opacity-70 shrink-0" />
           </Button>
-          <span className="text-[11px] text-muted-foreground text-center">Supports .docx and .pdf formats</span>
+          <span className="text-[11px] text-muted-foreground text-center">{t.editor.supportsFormats}</span>
         </div>
         {!docx && outputText && (
           <p className="mt-3 text-center text-xs text-muted-foreground px-4">

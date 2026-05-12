@@ -8,23 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLanguage } from "@/i18n/LanguageContext";
 
 const Contact = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
-      toast.error("Please fill in all fields", { position: "top-center" });
+      toast.error(t.errors.required, { position: "top-center" });
       return;
     }
     setSending(true);
-    // UI-only — simulate a send
     await new Promise((r) => setTimeout(r, 600));
-    toast.success("Thanks! We'll get back to you soon. ✅", {
+    toast.success(t.contact.successMessage, {
       position: "top-center",
       duration: 2500,
     });
@@ -42,7 +43,7 @@ const Contact = () => {
           <div className="mb-6 flex justify-end">
             <Link to="/">
               <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" /> Back
+                <ArrowLeft className="h-4 w-4" /> {t.common.back}
               </Button>
             </Link>
           </div>
@@ -51,11 +52,9 @@ const Contact = () => {
               <MessageSquare className="h-6 w-6 text-primary-foreground" />
             </div>
             <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight mb-3">
-              Contact & <span className="text-gradient-emerald">Feedback</span>
+              {t.contact.title} <span className="text-gradient-emerald">{t.contact.titleAccent}</span>
             </h1>
-            <p className="text-muted-foreground">
-              Have a suggestion or found a bug? Let us know!
-            </p>
+            <p className="text-muted-foreground">{t.contact.subtitle}</p>
           </div>
 
           <form
@@ -63,18 +62,18 @@ const Contact = () => {
             className="mx-auto max-w-xl rounded-2xl border border-border bg-gradient-card p-6 md:p-8 shadow-card-premium backdrop-blur space-y-5"
           >
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t.labels.name}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder={t.contact.namePlaceholder}
                 autoComplete="name"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t.labels.email}</Label>
               <Input
                 id="email"
                 type="email"
@@ -86,12 +85,12 @@ const Contact = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="message">Message</Label>
+              <Label htmlFor="message">{t.labels.reason}</Label>
               <Textarea
                 id="message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Tell us what's on your mind..."
+                placeholder={t.contact.messagePlaceholder}
                 className="min-h-[160px] resize-y"
               />
             </div>
@@ -104,12 +103,12 @@ const Contact = () => {
               className="w-full"
             >
               <Send className="mr-2 h-4 w-4" />
-              {sending ? "Sending..." : "Send Message"}
+              {sending ? t.common.processing : t.buttons.submit}
             </Button>
 
             <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
               <Mail className="h-3.5 w-3.5" />
-              We usually reply within 1–2 business days.
+              {t.contact.replyTime}
             </p>
           </form>
         </section>

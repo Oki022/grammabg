@@ -308,6 +308,7 @@ if (!isPro) {
   setWordLimitReached(true);
   localStorage.setItem('freeWordUsed', 'true');
 }
+setCount(prev => prev + 1);
 toast.success("The Word file has been translated flawlessly!");
 setLoading(false);
 } catch (err: any) {
@@ -368,6 +369,7 @@ if (user && isPro && data.result) {
     user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
   });
 }
+        setCount(prev => prev + 1);
         toast.success("Text successfully polished!");
         setLoading(false);
       }

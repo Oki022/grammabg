@@ -97,6 +97,8 @@ WHAT TO FIX (only genuine errors):
 4. Clear punctuation errors
 5. Clear grammar errors
 
+IMPORTANT: Be highly conservative. Only fix errors that are 100% unambiguously wrong. When in doubt, leave it unchanged. A document with fewer corrections is better than one with questionable changes.
+
 WHAT NOT TO CHANGE:
 - Correct text that has no errors — leave it exactly as-is
 - Proper nouns (person names, city names, institution names, abbreviations)
@@ -105,6 +107,8 @@ WHAT NOT TO CHANGE:
 - Sentence structure that is already correct Bulgarian
 - Word order that is already natural Bulgarian
 - Leading spaces or indentation at the start of a paragraph — preserve exactly as-is, do NOT remove them
+- Subject-verb agreement that could be intentionally written in a different register
+- Prepositional phrases that are acceptable in formal Bulgarian
 
 CRITICAL — PUNCTUATION:
 - Vocative comma: when a greeting or direct address is followed by a name or term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю".

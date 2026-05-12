@@ -166,9 +166,9 @@ const Editor = () => {
   const { t } = useLanguage();
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
-  const limitReached = !isPro && !!user && count >= FREE_LIMIT;
-  const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
-  const hasInput = !!inputText.trim();
+ const limitReached = !isPro && !!user && count >= FREE_LIMIT && !docx;
+ const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
+ const hasInput = !!inputText.trim();
 
   const buttonLabel = isChecking
   ? t.editor.checkingCredits

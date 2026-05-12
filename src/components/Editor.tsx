@@ -170,15 +170,15 @@ const Editor = () => {
  const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
  const hasInput = !!inputText.trim();
 
-  const buttonLabel = isChecking
+const buttonLabel = isChecking
   ? t.editor.checkingCredits
   : loading ? t.editor.fixing
-  : limitReached ? t.editor.upgradeToPro
-: !user
+  : limitReached && !docx ? t.editor.upgradeToPro
+  : !user
     ? anonRemaining !== null && !docx
       ? `${t.editor.fixMyText} (${anonRemaining.text}/5)`
       : t.editor.fixMyText
-    : isPro ? t.buttons.fixText : `${t.buttons.fixText} (${remaining})`;
+    : isPro ? t.buttons.fixText : docx ? t.buttons.fixText : `${t.buttons.fixText} (${remaining})`;
   // Fingerprint oluştur
   useEffect(() => {
     const generateFingerprint = async () => {

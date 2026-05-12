@@ -68,7 +68,12 @@ serve(async (req: Request) => {
         });
         const subscription = await subRes.json();
         const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        const planType = session.line_items?.data?.[0]?.price?.id === 'price_1TSddXH7gfnEgeldBwm8sfAV' ? 'yearly' : 'pro';
+        const subRes2 = await fetch(`https://api.stripe.com/v1/checkout/sessions/${session.id}/line_items`, {
+       headers: { 'Authorization': `Bearer ${stripeKey}` }
+       });
+       const lineItems2 = await subRes2.json();
+       const priceId = lineItems2.data?.[0]?.price?.id;
+       const planType = priceId === 'price_1TWFLnH7gfnEgeldzNaQqiSl' ? 'yearly' : 'pro';
 
         await supabaseAdmin.auth.admin.updateUserById(userId, {
           user_metadata: {

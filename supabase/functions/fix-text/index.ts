@@ -75,7 +75,7 @@ CRITICAL RULES:
 - PRESERVE any leading spaces or indentation at the start of lines — do NOT remove them.
 - Do NOT change word order if it is already correct Bulgarian.
 - PRESERVE all line breaks with \\n exactly as in input.
-- Vocative comma: when a sentence begins with a greeting or direct address followed by a name/term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю", "Моля, изпратете".
+- Vocative comma: insert a comma AFTER the complete address phrase, not within it. "Уважаема госпожо Димитрова," is correct (comma after full phrase). NEVER split a title and name with a comma: "госпожо, Димитрова" is WRONG. For greetings: "Здравей, мацка" is correct because greeting and address are separate.
 
 Return ONLY valid JSON:
 {
@@ -111,7 +111,7 @@ WHAT NOT TO CHANGE:
 - Prepositional phrases that are acceptable in formal Bulgarian
 
 CRITICAL — PUNCTUATION:
-- Vocative comma: when a greeting or direct address is followed by a name or term of address, always insert a comma between them. Examples: "Здравей, мацка", "Здрасти, Иване", "Добре, приятелю".
+- Vocative comma: insert a comma AFTER the complete address phrase, not within it. "Уважаема госпожо Димитрова," is correct (comma after full phrase). NEVER split a title and name with a comma: "госпожо, Димитрова" is WRONG. For greetings: "Здравей, мацка" is correct because greeting and address are separate.
 
 CRITICAL — BULGARIAN GENDER AGREEMENT:
 - Feminine nouns (мацка, жена, госпожа, майка, etc.) → feminine adjectives: красива, хубава, умна.

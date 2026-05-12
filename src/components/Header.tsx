@@ -23,24 +23,15 @@ const Header = () => {
     { href: "/contact", label: t.nav.contact },
   ];
  
-  // Scroll Mantığı (Tamamen yenilendi ve hatasızlaştırıldı)
   useEffect(() => {
     let lastScrollY = window.scrollY;
- 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
- 
-      if (currentScrollY < 50) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY) {
-        setIsVisible(false);
-      } else {
-        setIsVisible(true);
-      }
- 
+      if (currentScrollY < 50) setIsVisible(true);
+      else if (currentScrollY > lastScrollY) setIsVisible(false);
+      else setIsVisible(true);
       lastScrollY = currentScrollY;
     };
- 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -50,10 +41,6 @@ const Header = () => {
     toast.success(t.success.signedOut);
     setOpen(false);
   };
- 
-  const userInitial = (user?.user_metadata?.display_name || user?.email || "?")
-    .charAt(0)
-    .toUpperCase();
  
   return (
     <header
@@ -76,6 +63,7 @@ const Header = () => {
           ))}
         </nav>
  
+        {/* Desktop */}
         <div className="hidden md:flex items-center gap-2">
           <LanguageSwitcher />
           <ThemeToggle />
@@ -105,8 +93,8 @@ const Header = () => {
           )}
         </div>
  
+        {/* Mobile — sadece ThemeToggle ve hamburger */}
         <div className="md:hidden flex items-center gap-1">
-          <LanguageSwitcher />
           <ThemeToggle />
           <button
             aria-label="Toggle menu"
@@ -131,7 +119,13 @@ const Header = () => {
                 {l.label}
               </a>
             ))}
-            <div className="flex gap-2 pt-2">
+
+            {/* Dil seçici mobil menüde */}
+            <div className="pt-1 pb-1">
+              <LanguageSwitcher />
+            </div>
+
+            <div className="flex gap-2 pt-1">
               {user ? (
                 <>
                   <Link to="/profile" className="flex-1" onClick={() => setOpen(false)}>
@@ -139,14 +133,14 @@ const Header = () => {
                       <UserIcon className="h-4 w-4 mr-2" /> {t.nav.profile}
                     </Button>
                   </Link>
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={handleSignOut}>
+                  <Button variant="ghost" size="sm" className="flex-1 text-foreground border border-border" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4 mr-2" /> {t.nav.signout}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/login" className="flex-1" onClick={() => setOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full text-foreground">{t.nav.login}</Button>
+                    <Button variant="outline" size="sm" className="w-full">{t.nav.login}</Button>
                   </Link>
                   <Link to="/register" className="flex-1" onClick={() => setOpen(false)}>
                     <Button variant="emerald" size="sm" className="w-full">{t.nav.signup}</Button>

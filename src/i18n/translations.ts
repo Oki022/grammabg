@@ -74,7 +74,7 @@ export const translations = {
       eyebrow: "Корпоративен документен стандарт",
       h1: "Безупречен български.",
       h1Accent: "Форматирането запазено.",
-      subtitle: "Вашите Word и PDF документи се коригират езиково — без да се засягат таблиците, логото, подписите или страничното оформление.",
+      subtitle: "Вашите Word и PDF документи се коригират езиково без да се засягат таблиците, логото, подписите или страничното оформление.",
       trustLine: "Адвокатски кантори · Износни компании · Академични институции · C-Level",
       goToEditor: "Към редактора",
       tryFree: "Опитай безплатно →",
@@ -87,7 +87,7 @@ export const translations = {
     features: [
       { title: "Професионален граматичен стандарт", desc: "Повече от просто поправка на правописни грешки. GrammaBG коригира граматика, пунктуация и стил, за да отговаря на стандарта, очакван в корпоративната и правна комуникация." },
       { title: "Поправи езика. Запази структурата.", desc: "За разлика от стандартните инструменти, GrammaBG никога не засяга форматирането. Таблиците, логата, подписите и страничното оформление остават точно такива, каквито са били." },
-      { title: "Поддръжка на Word и PDF документи", desc: "Качете .docx или PDF файлове и получете коригиран документ в същия формат — готов за изпращане, подписване или публикуване без преформатиране." },
+      { title: "Поддръжка на Word и PDF документи", desc: "Качете .docx или PDF файлове и получете коригиран документ в същия формат готов за изпращане, подписване или публикуване без преформатиране." },
     ],
     faq: {
       title: "Често задавани",
@@ -147,13 +147,13 @@ export const translations = {
       currentPlan: "Текущ план",
       plans: {
         free: { name: "Безплатен план", desc: "Перфектен за изпробване на услугата.", cta: "Започни сега", features: ["5 проверки на ден", "1 Word (.docx) поправка на ден", "Стандартни граматически корекции", "Без PDF поддръжка"] },
-        pro: { name: "Pro план", desc: "Разширени инструменти с щедри месечни квоти.", cta: "Започни Pro — €12/мес", features: ["200 кредита на месец", "50 Word (.docx) поправки на месец", "15 PDF експорта на месец", "Приоритетна обработка", "Пълна история на корекциите"] },
+        pro: { name: "Pro план", desc: "Разширени инструменти с щедри месечни квоти.", cta: "Започни Pro — €12/мес", features: ["200 текст кредита на месец", "50 Word (.docx) поправки на месец", "15 PDF експорта на месец", "Приоритетна обработка", "Пълна история на корекциите"] },
         yearly: { name: "Годишен Pro", desc: "€8.25/мес — спестете 31%", cta: "Спести сега", features: ["Всички Pro функции", "🚀 Отключи 'Ultimate' двигател", "Приоритетна клиентска поддръжка", "Вземи 2 месеца БЕЗПЛАТНО!"] },
       },
     },
     editor: {
       title: "Редакторът",
-      subtitle: "Поставете текст или качете Word документ. Получете професионално коригиран български — с запазено форматиране.",
+      subtitle: "Поставете текст или качете Word документ. Получете професионално коригиран български със запазено форматиране.",
       placeholder: "Поставете вашия текст или качете .docx / .pdf файл...",
       outputPlaceholder: "Коригираният текст ще се появи тук...",
       uploadDocx: "Upload .docx",
@@ -287,7 +287,7 @@ export const translations = {
       eyebrow: "Corporate Document Standard",
       h1: "Flawless Bulgarian.",
       h1Accent: "Format Preserved.",
-      subtitle: "Your Word and PDF documents are corrected linguistically — without touching the tables, logo, signatures, or page layout.",
+      subtitle: "Your Word and PDF documents are corrected linguistically without touching the tables, logo, signatures, or page layout.",
       trustLine: "Law Firms · Export Companies · Academic Institutions · C-Level",
       goToEditor: "Go to Editor",
       tryFree: "Try for Free →",
@@ -300,7 +300,7 @@ export const translations = {
     features: [
       { title: "Professional Grammar Standard", desc: "Beyond simple typo fixes. GrammaBG corrects grammar, punctuation, and style to meet the standard expected in corporate and legal communication." },
       { title: "Fix the Language. Keep the Structure.", desc: "Unlike standard tools, GrammaBG never touches your formatting. Tables, logos, signatures, and page layout stay exactly as they were." },
-      { title: "Word & PDF Document Support", desc: "Upload .docx or PDF files and receive a corrected document in the same format — ready to send, sign, or publish without any reformatting." },
+      { title: "Word & PDF Document Support", desc: "Upload .docx or PDF files and receive a corrected document in the same format ready to send, sign, or publish without any reformatting." },
     ],
     faq: {
       title: "Frequently asked",
@@ -360,13 +360,13 @@ export const translations = {
       currentPlan: "Current Plan",
       plans: {
         free: { name: "Free Plan", desc: "Perfect for trying out the service.", cta: "Get Started", features: ["5 checks per day", "1 Word (.docx) file fix per day", "Standard grammar fixes", "No PDF support"] },
-        pro: { name: "Pro Plan", desc: "Advanced tools with generous monthly quotas.", cta: "Start Pro — €12/mo", features: ["200 Credits per month", "50 Word (.docx) fixes per month", "15 PDF exports per month", "Priority Processing", "Full Correction History"] },
+        pro: { name: "Pro Plan", desc: "Advanced tools with generous monthly quotas.", cta: "Start Pro — €12/mo", features: ["200 text Credits per month", "50 Word (.docx) fixes per month", "15 PDF exports per month", "Priority Processing", "Full Correction History"] },
         yearly: { name: "Yearly Pro", desc: "€8.25/mo — save 31%", cta: "Save Now", features: ["All Pro Plan features", "🚀 Unlock 'Ultimate' Engine", "Priority customer support", "Get 2 Months FREE!"] },
       },
     },
     editor: {
       title: "The Editor",
-      subtitle: "Paste your text or upload a Word document. Receive professionally corrected Bulgarian — with formatting fully preserved.",
+      subtitle: "Paste your text or upload a Word document. Receive professionally corrected Bulgarian with formatting fully preserved.",
       placeholder: "Paste your text or upload a .docx / .pdf file...",
       outputPlaceholder: "Your corrected text will appear here...",
       uploadDocx: "Upload .docx",

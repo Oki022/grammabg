@@ -32,7 +32,8 @@ const handleUpgrade = async (priceId: string) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`
       },
-      body: JSON.stringify({ priceId }),
+      // BINGO: userId eklendi!
+      body: JSON.stringify({ priceId, userId: session.user.id }),
     });
     const data = await response.json();
     if (data.url) {

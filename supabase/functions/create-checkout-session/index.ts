@@ -16,10 +16,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    // userId bazen frontend'den gelmeyebilir, hata almamak için kontrol ekledik
     const { priceId, userId } = await req.json()
     
-    // Origin'i alıyoruz ama garanti olması için bir fallback (yedek) ekliyoruz
+    // 🚨 GÜVENLİK DUVARI: userId yoksa işlemi anında durdur!
+    if (!userId) {
+      throw new Error("Kritik Hata: Frontend'den userId gönderilmedi!");
+    }
+
     const origin = req.headers.get('origin') || 'https://grammabg.com'
 
     const session = await stripe.checkout.sessions.create({

@@ -521,15 +521,11 @@ if (user && isPro && data.result) {
     } catch (err) { toast.error("An error occurred during the download."); }
   };
 
-  const handleDownloadPdf = async () => {
+ const handleDownloadPdf = async () => {
     if (!outputText) { toast.error("No corrected text to download."); return; }
     if (pdfLoaded) {
-    const confirmed = window.confirm(
-      language === 'bg' 
-        ? "PDF форматът не може да бъде напълно запазен. Изтегленият файл ще съдържа коригирания текст в стандартно оформление. Продължете?"
-        : "PDF formatting cannot be fully preserved. The downloaded file will contain the corrected text in a standard layout. Continue?"
-    );
-    if (!confirmed) return;
+      const confirmed = window.confirm(t.editor.pdfWarning);
+      if (!confirmed) return;
   }
     try {
       toast.info("Preparing PDF...");

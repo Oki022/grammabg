@@ -175,6 +175,7 @@ export const translations = {
       noIssues: "Текстът изглежда добре — не са необходими корекции.",
       changesApplied: "приложени промени",
       change: "промяна",
+      pdfWarning: "Форматът на качения PDF не може да бъде напълно запазен. Изтегленият файл може да изглежда различно. Искате ли да продължите?",
     },
     profile: {
       title: "Вашият",
@@ -388,6 +389,7 @@ export const translations = {
       noIssues: "Your text looks great — no corrections needed.",
       changesApplied: "changes applied",
       change: "change",
+      pdfWarning: "The uploaded PDF format cannot be fully preserved. The downloaded file may look different. Do you want to continue?",
     },
     profile: {
       title: "Your",

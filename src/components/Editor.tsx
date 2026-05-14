@@ -230,7 +230,7 @@ const buttonLabel = isChecking
     }
   }, []);
 
-  const handleFix = async () => {
+const handleFix = async () => {
     if (!isPro && docxInputRef.current?.files?.[0] && (freeWordUsed || wordLimitReached)) {
       setWordModalOpen(true);
       return;
@@ -238,7 +238,6 @@ const buttonLabel = isChecking
     const currentWordFile = docxInputRef.current?.files?.[0];
     if ((!currentWordFile && !inputText) || loading || limitReached) return;
 
-    // Anonim kullanıcı — login'e yönlendirme YOK, direkt devam et
     setLoading(true);
 
     try {
@@ -260,39 +259,36 @@ const buttonLabel = isChecking
               body: JSON.stringify({ fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true, fingerprint })
             });
             const data = await res.json();
-if (!res.ok) {
-  // 🚨 YENİ EKLENEN KISIM: Backend'den ne hata gelirse gelsin, içinde limit geçiyorsa sayacı SIFIRLA!
-  const isLimitError = 
-    res.status === 429 || 
-    (data.error && data.error.toLowerCase().includes('limit')) ||
-    (data.limitReason && data.limitReason.includes('anon'));
-
-  if (!user && isLimitError) {
-    setAnonRemaining({ text: 0, word: 0 });
-    localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
-    
-    // Eğer reset tarihi gelmediyse yarına ayarla
-    const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    setAnonResetAt(resetTime);
-    localStorage.setItem('anonResetAt', resetTime);
-    
-    setAnonLimitModalOpen(true); 
-    setLoading(false); 
-    return;
-  }
+            
+            if (!res.ok) {
+              if (res.status === 429 || (data.error && data.error.toLowerCase().includes('limit'))) {
+                if (!user) {
+                  setAnonRemaining({ text: 0, word: 0 });
+                  localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+                  const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+                  setAnonResetAt(resetTime);
+                  localStorage.setItem('anonResetAt', resetTime);
+                  setAnonLimitModalOpen(true); 
+                  setLoading(false); 
+                  return;
+                }
+              }
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'daily_word_limit') {
-              setFreeWordUsed(true);
-              setWordLimitReached(true);
-              localStorage.setItem('freeWordUsed', 'true');
-              setWordModalOpen(true);
-              setLoading(false);
-              return;
+                setFreeWordUsed(true);
+                setWordLimitReached(true);
+                localStorage.setItem('freeWordUsed', 'true');
+                setWordModalOpen(true);
+                setLoading(false);
+                return;
               }
-              toast.error(data.error || 'Limit reached.'); setLoading(false); return;
+              toast.error(data.error || 'Limit reached.');
+              setLoading(false); 
+              return;
             }
+
             if (data && data.error) {
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
@@ -306,29 +302,33 @@ if (!res.ok) {
                 (c: any) => c.original?.trim() !== c.corrected?.trim()
               )
             );
+
             if (user && isPro && data.result) {
               await supabase.from('history' as any).insert({
                 user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
               });
             }
+
             setOutputText((data.result || "").replace(/\r\n/g, "\n").replace(/([.!?])\s{2,}/g, "$1\n\n").trim());
             setFileName(data.fileName);
+
             if (data.anonRemaining) {
-  setAnonRemaining(data.anonRemaining);
-  localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
-}
-if (!isPro) {
-  setWordLimitReached(true);
-  localStorage.setItem('freeWordUsed', 'true');
-}
-setCount(prev => prev + 1);
-toast.success("The Word file has been translated flawlessly!");
-setLoading(false);
-} catch (err: any) {
-  toast.error(err.message || "An error occurred during translation.");
-  setLoading(false);
-}
-};
+              setAnonRemaining(data.anonRemaining);
+              localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
+            }
+            if (!isPro) {
+              setWordLimitReached(true);
+              localStorage.setItem('freeWordUsed', 'true');
+            }
+            setCount(prev => prev + 1);
+            toast.success("The Word file has been translated flawlessly!");
+            setLoading(false);
+
+          } catch (err: any) {
+            toast.error(err.message || "An error occurred during translation.");
+            setLoading(false);
+          }
+        };
       } else {
         const res = await fetch('https://qpfrckcumebcvwljdxfw.supabase.co/functions/v1/fix-text', {
           method: 'POST',
@@ -339,39 +339,38 @@ setLoading(false);
           body: JSON.stringify({ text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined, fingerprint })
         });
         const data = await res.json();
-if (!res.ok) {
-  // 🚨 YENİ EKLENEN KISIM: Backend'den ne hata gelirse gelsin, içinde limit geçiyorsa sayacı SIFIRLA!
-  const isLimitError = 
-    res.status === 429 || 
-    (data.error && data.error.toLowerCase().includes('limit')) ||
-    (data.limitReason && data.limitReason.includes('anon'));
-
-  if (!user && isLimitError) {
-    setAnonRemaining({ text: 0, word: 0 });
-    localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
-    
-    // Eğer reset tarihi gelmediyse yarına ayarla
-    const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    setAnonResetAt(resetTime);
-    localStorage.setItem('anonResetAt', resetTime);
-    
-    setAnonLimitModalOpen(true); 
-    setLoading(false); 
-    return;
-  }
+        
+        if (!res.ok) {
+          if (res.status === 429 || (data.error && data.error.toLowerCase().includes('limit'))) {
+            if (!user) {
+              setAnonRemaining({ text: 0, word: 0 });
+              localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+              const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+              setAnonResetAt(resetTime);
+              localStorage.setItem('anonResetAt', resetTime);
+              setAnonLimitModalOpen(true); 
+              setLoading(false); 
+              return;
+            }
+          }
+          
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'daily_word_limit') {
-          setFreeWordUsed(true);
-          setWordLimitReached(true);
-          localStorage.setItem('freeWordUsed', 'true');
-          setWordModalOpen(true);
-          setLoading(false);
-           return;
+            setFreeWordUsed(true);
+            setWordLimitReached(true);
+            localStorage.setItem('freeWordUsed', 'true');
+            setWordModalOpen(true);
+            setLoading(false);
+            return;
           }
-          toast.error(data.error || 'Limit reached.'); setLoading(false); return;
+          
+          toast.error(data.error || 'Limit reached.'); 
+          setLoading(false); 
+          return;
         }
+
         if (data && data.error) {
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
@@ -385,15 +384,18 @@ if (!res.ok) {
             (c: any) => c.original?.trim() !== c.corrected?.trim()
           )
         );
+
         if (data.anonRemaining) {
-  setAnonRemaining(data.anonRemaining);
-  localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
-}
-if (user && isPro && data.result) {
-  await supabase.from('history' as any).insert({
-    user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
-  });
-}
+          setAnonRemaining(data.anonRemaining);
+          localStorage.setItem('anonRemaining', JSON.stringify(data.anonRemaining));
+        }
+
+        if (user && isPro && data.result) {
+          await supabase.from('history' as any).insert({
+            user_id: user.id, original_text: inputText, fixed_text: data.result, tone: tone,
+          });
+        }
+        
         setCount(prev => prev + 1);
         toast.success("Text successfully polished!");
         setLoading(false);

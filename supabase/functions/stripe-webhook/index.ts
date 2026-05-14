@@ -74,7 +74,15 @@ serve(async (req: Request) => {
             headers: { 'Authorization': `Bearer ${stripeKey}` }
           });
           const subscription = await subRes.json();
-          const periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+let periodEnd;
+if (subscription.current_period_end) {
+  periodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+} else {
+  console.error("Stripe Hatası (Muhtemelen Secret Key eksik):", subscription);
+  const fallback = new Date();
+  fallback.setMonth(fallback.getMonth() + 1);
+  periodEnd = fallback.toISOString();
+}
           
           // Satın alınan ürünü (price ID) bul
           const subRes2 = await fetch(`https://api.stripe.com/v1/checkout/sessions/${session.id}/line_items`, {
@@ -86,7 +94,7 @@ serve(async (req: Request) => {
           console.log(`Detected Price ID: ${priceId}`);
 
           // Plan tipini açıkça ve güvenli bir şekilde belirle
-          let planType = 'pro'; // Varsayılan olarak aylık plan (pro) kabul edelim
+          let planType = 'pro'; // Varsayılan olarak aylık plan (pro) kabul edirdelim
           if (priceId === YEARLY_PRICE_ID) {
             planType = 'yearly';
           } else if (priceId === MONTHLY_PRICE_ID) {

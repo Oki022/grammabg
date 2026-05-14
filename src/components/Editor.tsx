@@ -134,6 +134,7 @@ const Editor = () => {
   const [fileName, setFileName] = useState<string>("");
   const [corrections, setCorrections] = useState<any[]>([]);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  
 
   // Kredi modalları
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -163,7 +164,7 @@ const Editor = () => {
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const { user, isPro } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
  const limitReached = !isPro && !!user && count >= FREE_LIMIT && !docx;
@@ -522,6 +523,14 @@ if (user && isPro && data.result) {
 
   const handleDownloadPdf = async () => {
     if (!outputText) { toast.error("No corrected text to download."); return; }
+    if (pdfLoaded) {
+    const confirmed = window.confirm(
+      language === 'bg' 
+        ? "PDF форматът не може да бъде напълно запазен. Изтегленият файл ще съдържа коригирания текст в стандартно оформление. Продължете?"
+        : "PDF formatting cannot be fully preserved. The downloaded file will contain the corrected text in a standard layout. Continue?"
+    );
+    if (!confirmed) return;
+  }
     try {
       toast.info("Preparing PDF...");
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });

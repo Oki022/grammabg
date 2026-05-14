@@ -168,7 +168,7 @@ const Editor = () => {
   console.log("Editor isPro:", isPro, "user plan:", user?.user_metadata?.plan);
 
  const limitReached = !isPro && !!user && count >= FREE_LIMIT && !docx;
- const remaining = isPro ? "Unlimited" : Math.max(0, FREE_LIMIT - count);
+ const remaining = Math.max(0, FREE_LIMIT - count);
  const hasInput = !!inputText.trim();
 
 const buttonLabel = isChecking
@@ -321,7 +321,7 @@ const handleFix = async () => {
               localStorage.setItem('freeWordUsed', 'true');
             }
             setCount(prev => prev + 1);
-            toast.success("The Word file has been translated flawlessly!");
+            toast.success(language === 'bg' ? "Word файлът е коригиран успешно!" : "The Word file has been corrected successfully!");
             setLoading(false);
 
           } catch (err: any) {
@@ -397,7 +397,7 @@ const handleFix = async () => {
         }
         
         setCount(prev => prev + 1);
-        toast.success("Text successfully polished!");
+        toast.success(language === 'bg' ? "Текстът е коригиран успешно!" : "Text successfully polished!");
         setLoading(false);
       }
     } catch (error: any) {

@@ -260,14 +260,26 @@ const buttonLabel = isChecking
               body: JSON.stringify({ fileBase64: base64, fileName: currentWordFile.name, tone: tone, isFile: true, fingerprint })
             });
             const data = await res.json();
-            if (!res.ok) {
-              if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
-  setAnonResetAt(data.resetAt || '');
-  setAnonRemaining({ text: 0, word: 0 });
-  localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
-  localStorage.setItem('anonResetAt', data.resetAt || '');  // ← BUNU EKLE
-  setAnonLimitModalOpen(true); setLoading(false); return;
-}
+if (!res.ok) {
+  // 🚨 YENİ EKLENEN KISIM: Backend'den ne hata gelirse gelsin, içinde limit geçiyorsa sayacı SIFIRLA!
+  const isLimitError = 
+    res.status === 429 || 
+    (data.error && data.error.toLowerCase().includes('limit')) ||
+    (data.limitReason && data.limitReason.includes('anon'));
+
+  if (!user && isLimitError) {
+    setAnonRemaining({ text: 0, word: 0 });
+    localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+    
+    // Eğer reset tarihi gelmediyse yarına ayarla
+    const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    setAnonResetAt(resetTime);
+    localStorage.setItem('anonResetAt', resetTime);
+    
+    setAnonLimitModalOpen(true); 
+    setLoading(false); 
+    return;
+  }
               if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
               if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }
@@ -327,14 +339,26 @@ setLoading(false);
           body: JSON.stringify({ text: inputText, tone: tone, isFile: pdfLoaded, fileName: pdfLoaded ? 'document.pdf' : undefined, fingerprint })
         });
         const data = await res.json();
-        if (!res.ok) {
-          if (data.limitReason === 'anon_text_limit' || data.limitReason === 'anon_word_limit') {
-  setAnonResetAt(data.resetAt || '');
-  setAnonRemaining({ text: 0, word: 0 });
-  localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
-  localStorage.setItem('anonResetAt', data.resetAt || '');  // ← BUNU EKLE
-  setAnonLimitModalOpen(true); setLoading(false); return;
-}
+if (!res.ok) {
+  // 🚨 YENİ EKLENEN KISIM: Backend'den ne hata gelirse gelsin, içinde limit geçiyorsa sayacı SIFIRLA!
+  const isLimitError = 
+    res.status === 429 || 
+    (data.error && data.error.toLowerCase().includes('limit')) ||
+    (data.limitReason && data.limitReason.includes('anon'));
+
+  if (!user && isLimitError) {
+    setAnonRemaining({ text: 0, word: 0 });
+    localStorage.setItem('anonRemaining', JSON.stringify({ text: 0, word: 0 }));
+    
+    // Eğer reset tarihi gelmediyse yarına ayarla
+    const resetTime = data.resetAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    setAnonResetAt(resetTime);
+    localStorage.setItem('anonResetAt', resetTime);
+    
+    setAnonLimitModalOpen(true); 
+    setLoading(false); 
+    return;
+  }
           if (data.limitReason === 'word_limit_buy_more') { setWordCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'pdf_limit_buy_more') { setCreditModalOpen(true); setLoading(false); return; }
           if (data.limitReason === 'text_limit_buy_more') { setTextCreditModalOpen(true); setLoading(false); return; }

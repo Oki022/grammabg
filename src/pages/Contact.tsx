@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Send, MessageSquare, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,26 @@ const Contact = () => {
   const [sending, setSending] = useState(false);
   const { t } = useLanguage();
 
+  // Google Arama sonuçlarından gizleme ve SEO temizliği
+  useEffect(() => {
+    // 1. Sayfa başlığını Bulgarca ve Premium yap (Taranırsa bile düzgün görünsün)
+    document.title = "Контакт | GRAMMABG.COM";
+
+    // 2. Google'a "Bu sayfayı dizine ekleme" diyen meta etiketini oluştur
+    const metaRobots = document.createElement('meta');
+    metaRobots.name = "robots";
+    metaRobots.content = "noindex, nofollow";
+    document.getElementsByTagName('head')[0].appendChild(metaRobots);
+
+    // 3. Sayfadan ayrıldığında bu etiketi kaldır (Ana sayfanın SEO'su etkilenmesin)
+    return () => {
+      const head = document.getElementsByTagName('head')[0];
+      if (head && metaRobots) {
+        head.removeChild(metaRobots);
+      }
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
@@ -24,11 +44,15 @@ const Contact = () => {
       return;
     }
     setSending(true);
+    
+    // Simüle edilmiş gönderim süreci
     await new Promise((r) => setTimeout(r, 600));
+    
     toast.success(t.contact.successMessage, {
       position: "top-center",
       duration: 2500,
     });
+    
     setName("");
     setEmail("");
     setMessage("");
@@ -43,7 +67,7 @@ const Contact = () => {
           <div className="mb-6 flex justify-end">
             <Link to="/">
               <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" /> {t.common.back}
+                <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
               </Button>
             </Link>
           </div>
@@ -69,6 +93,7 @@ const Contact = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t.contact.namePlaceholder}
                 autoComplete="name"
+                className="bg-background/50"
               />
             </div>
 
@@ -81,6 +106,7 @@ const Contact = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 autoComplete="email"
+                className="bg-background/50"
               />
             </div>
 
@@ -91,7 +117,7 @@ const Contact = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={t.contact.messagePlaceholder}
-                className="min-h-[160px] resize-y"
+                className="min-h-[160px] resize-y bg-background/50"
               />
             </div>
 
@@ -100,7 +126,7 @@ const Contact = () => {
               variant="emerald"
               size="lg"
               disabled={sending}
-              className="w-full"
+              className="w-full shadow-emerald"
             >
               <Send className="mr-2 h-4 w-4" />
               {sending ? t.common.processing : t.buttons.submit}

@@ -717,7 +717,7 @@ if (user && isPro && data.result) {
                   <Sparkles className="h-4 w-4 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-semibold leading-tight">Corrections & Suggestions</h3>
+                  <h3 className="font-display text-base font-semibold leading-tight">{t.labels.corrections}</h3>
                   <p className="text-[11px] text-muted-foreground">
                     {corrections.length > 0 ? `${corrections.length} change${corrections.length === 1 ? "" : "s"} applied` : "No issues found"}
                   </p>
@@ -778,12 +778,12 @@ if (user && isPro && data.result) {
         <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald"><History className="h-7 w-7 text-primary-foreground" /></div>
-            <DialogTitle className="text-center font-display text-2xl">Unlock <span className="text-gradient-emerald">History</span></DialogTitle>
-            <DialogDescription className="text-center">Save and access your previous corrections with the Pro Plan for only <span className="font-semibold text-foreground">€5.99/month</span>.</DialogDescription>
+            <DialogTitle className="text-center font-display text-2xl">{t.editor.historyTitle} <span className="text-gradient-emerald">{t.editor.historyAccent}</span></DialogTitle>
+            <DialogDescription className="text-center">{t.editor.historyDesc}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-            <Button variant="emerald" size="lg" className="w-full" onClick={() => { setHistoryModalOpen(false); goToPricing(); }}><Sparkles className="h-4 w-4" /> Get Pro Now</Button>
-            <button type="button" onClick={() => setHistoryModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">Maybe later</button>
+            <Button variant="emerald" size="lg" className="w-full" onClick={() => { setHistoryModalOpen(false); goToPricing(); }}><Sparkles className="h-4 w-4" />{t.editor.getProNow}</Button>
+            <button type="button" onClick={() => setHistoryModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">{t.editor.maybeLater}</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -793,12 +793,12 @@ if (user && isPro && data.result) {
         <DialogContent className="sm:max-w-md border-primary/30 bg-gradient-card shadow-emerald backdrop-blur">
           <DialogHeader>
             <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-emerald shadow-emerald"><FileType2 className="h-7 w-7 text-primary-foreground" /></div>
-            <DialogTitle className="text-center font-display text-2xl">PDF Upload is a <span className="text-gradient-emerald">Pro Feature</span></DialogTitle>
-            <DialogDescription className="text-center">PDF processing is a Pro feature. Word (.docx) remains free for everyone — upgrade to unlock PDF uploads & exports for only <span className="font-semibold text-foreground">€5.99/month</span>.</DialogDescription>
+            <DialogTitle className="text-center font-display text-2xl">{t.editor.pdfProTitle} <span className="text-gradient-emerald">{t.editor.pdfProAccent}</span></DialogTitle>
+            <DialogDescription className="text-center">{t.editor.pdfProDesc}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:flex-col sm:space-x-0 gap-2">
-            <Button variant="emerald" size="lg" className="w-full" onClick={() => { setPdfModalOpen(false); goToPricing(); }}><Sparkles className="h-4 w-4" /> Get Pro Now</Button>
-            <button type="button" onClick={() => setPdfModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">Maybe later</button>
+            <Button variant="emerald" size="lg" className="w-full" onClick={() => { setPdfModalOpen(false); goToPricing(); }}><Sparkles className="h-4 w-4" />{t.editor.getProNow}</Button>
+            <button type="button" onClick={() => setPdfModalOpen(false)} className="text-xs text-muted-foreground hover:text-foreground transition-smooth">{t.editor.maybeLater}</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

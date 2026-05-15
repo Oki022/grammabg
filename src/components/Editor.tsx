@@ -698,7 +698,7 @@ const handleFix = async () => {
         ? `${anonRemaining.text} ${t.editor.freeChecksLeft}`
         : t.editor.noAccountNeeded
       : limitReached ? t.editor.usedAllChecks
-      : `${remaining} ${t.editor.checksLeft}`}
+      : isPro ? "" : `${remaining} ${t.editor.checksLeft}`}
 </p>
         </div>
 

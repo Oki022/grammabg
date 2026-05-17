@@ -32,7 +32,6 @@ const handleUpgrade = async (priceId: string) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session.access_token}`
       },
-      // BINGO: userId eklendi!
       body: JSON.stringify({ priceId, userId: session.user.id }),
     });
     const data = await response.json();
@@ -59,20 +58,20 @@ const plans: Plan[] = [
   },
   {
     id: "pro",
-    price: "€12",
+    price: "€7.90",
     period: "/mo",
     highlighted: true,
     badge: "popular",
-    stripePriceId: "price_1TWFL9H7gfnEgeldjYyRNeNZ",
+    stripePriceId: "price_1TXyw6H7gfnEgeld5CKh7qaq",
   },
   {
     id: "yearly",
-    price: "€99",
+    price: "€69.99",
     period: "/year",
-    originalPrice: "€144",
-    saving: "31%",
-    monthlyEquiv: "€8.25",
-    stripePriceId: "price_1TWFLnH7gfnEgeldzNaQqiSl",
+    originalPrice: "€94.80",
+    saving: "27%",
+    monthlyEquiv: "€5.83",
+    stripePriceId: "price_1TXywmH7gfnEgeldS7AL13om",
   }
 ];
 
@@ -132,7 +131,6 @@ const Pricing = ({ showBackButton = false }: { showBackButton?: boolean }) => {
                 <span className="text-muted-foreground mb-1.5">{p.period}</span>
               </div>
 
-              {/* Yıllık plan için ekstra bilgi */}
               {p.originalPrice && (
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-sm text-muted-foreground line-through">{p.originalPrice}</span>

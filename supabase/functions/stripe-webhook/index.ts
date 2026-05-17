@@ -6,8 +6,8 @@ const EXTRA_TEXT_CREDITS_PER_PACK = 100;
 const EXTRA_WORD_CREDITS_PER_PACK = 25;
 
 // Yeni Stripe Price ID'lerini buraya sabitledik
-const YEARLY_PRICE_ID = 'price_1TWFLnH7gfnEgeldzNaQqiSl';
-const MONTHLY_PRICE_ID = 'price_1TWFL9H7gfnEgeldjYyRNeNZ';
+const YEARLY_PRICE_ID = 'price_1TXywmH7gfnEgeldS7AL13om';
+const MONTHLY_PRICE_ID = 'price_1TXyw6H7gfnEgeld5CKh7qaq';
 
 // Stripe signature verification - manuel olarak yapiyoruz
 async function verifyStripeSignature(body: string, signature: string, secret: string): Promise<boolean> {

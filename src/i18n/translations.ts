@@ -221,6 +221,8 @@ export const translations = {
       proCanceling: "Pro (Отменя се)",
       proPlan: "Pro план",
       freePlan: "Безплатен план",
+      cancelConfirm: "Сигурни ли сте? Pro функциите ще останат активни до края на периода.",
+      cancelSuccess: "Отменено! Планът ви изтича на",
     },
   },
   en: {
@@ -443,6 +445,8 @@ export const translations = {
       proCanceling: "Pro (Canceling)",
       proPlan: "Pro Plan",
       freePlan: "Free Plan",
+      cancelConfirm: "Are you sure? Your Pro features will remain active until the end of the period.",
+      cancelSuccess: "Canceled! Plan ends on",
     },
   },
 };

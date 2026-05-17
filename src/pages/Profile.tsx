@@ -61,14 +61,14 @@ const Profile = () => {
   const handleCancelSubscription = async () => {
     const subId = meta?.stripe_subscription_id;
     if (!subId) { toast.error("Subscription ID not found. Please refresh."); return; }
-    if (!confirm("Are you sure? Your Pro features will remain active until the end of the period.")) return;
+    if (!confirm(t.profile.cancelConfirm)) return;
     try {
       const { data, error } = await supabase.functions.invoke('cancel-subscription', {
         body: { subscriptionId: subId }
       });
       if (error) throw error;
       await supabase.auth.updateUser({ data: { canceling: true } });
-      toast.success(`Canceled! Plan ends on ${data.cancel_at}`);
+      toast.success(`${t.profile.cancelSuccess} ${data.cancel_at}`);
       setTimeout(() => window.location.reload(), 1500);
     } catch (err: any) {
       console.error("Cancel error:", err);

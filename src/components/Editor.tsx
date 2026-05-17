@@ -412,7 +412,7 @@ const handleFix = async () => {
     setCorrectedFileBase64(null); setFileName(""); setCorrections([]);
     if (docxInputRef.current) docxInputRef.current.value = "";
     if (pdfInputRef.current) pdfInputRef.current.value = "";
-    toast.success("Cleared");
+    toast.success(language === 'bg' ? "Изчистено!" : "Cleared!");
   };
 
   const handleCopy = () => { navigator.clipboard.writeText(outputText); toast.success("Copied!"); };
@@ -476,7 +476,7 @@ const handleFix = async () => {
           setDocx({ fileName: file.name.replace(".docx", "") });
         }
         setTone("Standard");
-        toast.success("Word file loaded with formatting!");
+        toast.success(language === 'bg' ? "Word файлът е зареден с форматиране!" : "Word file loaded with formatting!");
       } catch (error) {
         toast.error("Error occurred while reading the Word file.");
       } finally { setUploading(false); }

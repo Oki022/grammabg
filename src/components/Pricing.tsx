@@ -61,7 +61,10 @@ const plans: Plan[] = [
     price: "€7.90",
     period: "/mo",
     highlighted: true,
+    originalPrice: "€12",
+    saving: "34%",
     badge: "popular",
+    monthlyEquiv: "",
     stripePriceId: "price_1TXyw6H7gfnEgeld5CKh7qaq",
   },
   {

@@ -519,6 +519,17 @@ const handleFix = async () => {
     };
     reader.readAsArrayBuffer(file);
   };
+  
+  useEffect(() => {
+  const resetAt = localStorage.getItem('anonResetAt');
+  if (resetAt && new Date() > new Date(resetAt)) {
+    localStorage.removeItem('freeWordUsed');
+    localStorage.removeItem('anonRemaining');
+    localStorage.removeItem('anonResetAt');
+    setFreeWordUsed(false);
+    setWordLimitReached(false);
+  }
+}, []);
 
   useEffect(() => {
     if (user) {

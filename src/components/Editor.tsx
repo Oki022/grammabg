@@ -522,7 +522,7 @@ const handleFix = async () => {
   
   useEffect(() => {
   const resetAt = localStorage.getItem('anonResetAt');
-  if (resetAt && new Date() > new Date(resetAt)) {
+  if (!resetAt || new Date() > new Date(resetAt)) {
     localStorage.removeItem('freeWordUsed');
     localStorage.removeItem('anonRemaining');
     localStorage.removeItem('anonResetAt');

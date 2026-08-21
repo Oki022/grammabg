@@ -7,10 +7,13 @@ pool:
 steps:
 - script: |
     npm install @playwright/test
-    npx playwright install chromium
+    npx playwright install chromium --with-deps
   displayName: 'Install Playwright'
+  env:
+    PLAYWRIGHT_BROWSERS_PATH: C:\agent\ms-playwright
 
 - script: npx playwright test --project=chromium
   env:
     BASE_URL: https://grammabg.com
+    PLAYWRIGHT_BROWSERS_PATH: C:\agent\ms-playwright
   displayName: 'Run Playwright E2E tests'

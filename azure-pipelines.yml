@@ -1,0 +1,29 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+  displayName: 'Install Node.js'
+
+- script: npm ci
+  displayName: 'Install dependencies'
+
+- script: npx playwright install --with-deps chromium
+  displayName: 'Install Playwright browsers'
+
+- script: npx playwright test --project=chromium
+  env:
+    BASE_URL: https://grammabg.com
+  displayName: 'Run Playwright E2E tests'
+
+- task: PublishTestResults@2
+  condition: always()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: 'test-results/**/*.xml'
+  displayName: 'Publish test results'

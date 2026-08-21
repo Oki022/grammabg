@@ -10,7 +10,9 @@ steps:
     versionSpec: '18.x'
   displayName: 'Install Node.js'
 
-- script: npm ci
+- script: |
+    npm ci
+    npm install --save-dev @playwright/test
   displayName: 'Install dependencies'
 
 - script: npx playwright install --with-deps chromium

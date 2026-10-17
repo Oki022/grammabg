@@ -9,15 +9,11 @@ import {
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import { useLanguage } from "@/i18n/LanguageContext";
- 
-type LegalKey = "terms" | "privacy" | "cookies";
- 
+
 const Footer = () => {
-  const [open, setOpen] = useState<LegalKey | null>(null);
+  const [open, setOpen] = useState(false);
   const { t } = useLanguage();
- 
-  const legalKeys: LegalKey[] = ["terms", "privacy", "cookies"];
- 
+
   return (
     <footer className="border-t border-border/50 mt-12">
       <div className="container py-10 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -25,45 +21,44 @@ const Footer = () => {
           <Logo />
           <p className="text-sm text-muted-foreground">{t.footer.rights}</p>
         </div>
-        <div className="flex items-center gap-6 text-sm">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
           <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-smooth">
             {t.footer.contact}
           </Link>
-          {legalKeys.map((k) => (
-            <button
-              key={k}
-              onClick={() => setOpen(k)}
-              className="text-muted-foreground hover:text-foreground transition-smooth capitalize"
-            >
-              {t.footer.legal[k].label}
-            </button>
-          ))}
+          <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-smooth">
+            {t.footer.legal.terms.label}
+          </Link>
+          <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-smooth">
+            {t.footer.legal.privacy.label}
+          </Link>
+          <button
+            onClick={() => setOpen(true)}
+            className="text-muted-foreground hover:text-foreground transition-smooth"
+          >
+            {t.footer.legal.cookies.label}
+          </button>
         </div>
       </div>
- 
-      <Dialog open={open !== null} onOpenChange={(v) => !v && setOpen(null)}>
+
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl bg-card border-border">
-          {open && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-display text-2xl">
-                  {t.footer.legal[open].title}
-                </DialogTitle>
-                <DialogDescription className="text-muted-foreground">
-                  {t.footer.lastUpdated}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                {t.footer.legal[open].body.map((p, i) => (
-                  <p key={i} className="text-sm text-foreground/90 leading-relaxed">{p}</p>
-                ))}
-              </div>
-            </>
-          )}
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">
+              {t.footer.legal.cookies.title}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {t.footer.lastUpdated}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+            {t.footer.legal.cookies.body.map((p, i) => (
+              <p key={i} className="text-sm text-foreground/90 leading-relaxed">{p}</p>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </footer>
   );
 };
- 
+
 export default Footer;

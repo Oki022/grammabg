@@ -12,8 +12,19 @@ import { AuthProvider } from "./hooks/useAuth.tsx";
 import { ThemeProvider } from "./hooks/useTheme.tsx";
 import Pricing from "./components/Pricing";
 import { LanguageProvider } from "@/i18n/LanguageContext";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
 const App = () => {
   const isLocal = import.meta.env.DEV;
@@ -37,6 +48,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <AuthProvider>
+                <ScrollToTop />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/pricing" element={<Pricing showBackButton={true} />} />
@@ -45,6 +57,8 @@ const App = () => {
                   <Route path="/register" element={<Auth mode="signup" />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AuthProvider>

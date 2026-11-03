@@ -1,0 +1,307 @@
+# GrammaBG eval dataset
+#
+# Each case has:
+#   vars.input     — the Bulgarian text sent to the model
+#   vars.expected  — the exact text the model must return (omit for rubric-graded cases)
+#
+# Categories: spelling | spacing | punctuation | definite-article | agreement
+#             | capitalization | word-split | no-op | multi-error
+
+# ─────────────────────────────────────────────────────────────
+# SPELLING — wrong letter, missing letter, typo
+# ─────────────────────────────────────────────────────────────
+- description: "spelling — ь instead of ъ (Вьв)"
+  vars:
+    input: "Вьв всички случаи ще отговорим до петък."
+    expected: "Във всички случаи ще отговорим до петък."
+
+- description: "spelling — ь instead of ъ (потвьрдете)"
+  vars:
+    input: "Моля, потвьрдете получаването на документите."
+    expected: "Моля, потвърдете получаването на документите."
+
+- description: "spelling — ь instead of ъ (извьршва)"
+  vars:
+    input: "Доставката се извьршва на два етапа."
+    expected: "Доставката се извършва на два етапа."
+
+- description: "spelling — transposed letters (докумантация)"
+  vars:
+    input: "Прилагаме необходимата докумантация."
+    expected: "Прилагаме необходимата документация."
+
+- description: "spelling — missing letter (докумена)"
+  vars:
+    input: "Направихме необходимите промени в докумена."
+    expected: "Направихме необходимите промени в документа."
+
+- description: "spelling — misspelled noun (верския)"
+  vars:
+    input: "Изпращаме Ви актуализирана версиа на договора."
+    expected: "Изпращаме Ви актуализирана версия на договора."
+
+# ─────────────────────────────────────────────────────────────
+# SPACING — missing or duplicated spaces
+# ─────────────────────────────────────────────────────────────
+- description: "spacing — missing space before г."
+  vars:
+    input: "Срокът е до 31.03.2026г."
+    expected: "Срокът е до 31.03.2026 г."
+
+- description: "spacing — missing space after гр."
+  vars:
+    input: "Офисът се намира в гр.Пловдив."
+    expected: "Офисът се намира в гр. Пловдив."
+
+- description: "spacing — missing space after ул."
+  vars:
+    input: "Адресът е ул.Витоша 15."
+    expected: "Адресът е ул. Витоша 15."
+
+- description: "spacing — missing space after colon"
+  vars:
+    input: "Материалите включват:хартия, тонер и папки."
+    expected: "Материалите включват: хартия, тонер и папки."
+
+- description: "spacing — missing space after comma"
+  vars:
+    input: "Изпратихме офертата,както беше договорено."
+    expected: "Изпратихме офертата, както беше договорено."
+
+- description: "spacing — duplicated spaces"
+  vars:
+    input: "Моля,  изпратете  документите."
+    expected: "Моля, изпратете документите."
+
+- description: "spacing — missing space before ч."
+  vars:
+    input: "Срещата започва в 10ч."
+    expected: "Срещата започва в 10 ч."
+
+# ─────────────────────────────────────────────────────────────
+# PUNCTUATION — missing commas
+# ─────────────────────────────────────────────────────────────
+- description: "punctuation — missing comma after salutation"
+  vars:
+    input: "Уважаеми господин Петров"
+    expected: "Уважаеми господин Петров,"
+
+- description: "punctuation — missing vocative comma after greeting"
+  vars:
+    input: "Здравей Иване, радвам се да те чуя."
+    expected: "Здравей, Иване, радвам се да те чуя."
+
+- description: "punctuation — missing comma before че"
+  vars:
+    input: "Той каза че ще дойде утре."
+    expected: "Той каза, че ще дойде утре."
+
+- description: "punctuation — missing commas around relative clause"
+  vars:
+    input: "Документите които изпратихте са получени."
+    expected: "Документите, които изпратихте, са получени."
+
+- description: "punctuation — missing comma after conditional clause"
+  vars:
+    input: "Ако имате въпроси не се колебайте да ни пишете."
+    expected: "Ако имате въпроси, не се колебайте да ни пишете."
+
+- description: "punctuation — missing comma after Моля"
+  vars:
+    input: "Моля потвърдете получаването."
+    expected: "Моля, потвърдете получаването."
+
+# ─────────────────────────────────────────────────────────────
+# DEFINITE ARTICLE — пълен vs кратък член (masculine singular)
+# ─────────────────────────────────────────────────────────────
+- description: "definite article — subject needs пълен член (Договорът)"
+  vars:
+    input: "Договора е подписан от двете страни."
+    expected: "Договорът е подписан от двете страни."
+
+- description: "definite article — subject needs пълен член (Отчетът)"
+  vars:
+    input: "Отчета беше изпратен по имейл."
+    expected: "Отчетът беше изпратен по имейл."
+
+- description: "definite article — object needs кратък член (договора)"
+  vars:
+    input: "Подписахме договорът вчера."
+    expected: "Подписахме договора вчера."
+
+- description: "definite article — after preposition needs кратък член (бързия)"
+  vars:
+    input: "Благодарим за бързият отговор."
+    expected: "Благодарим за бързия отговор."
+
+- description: "definite article — after preposition needs кратък член (проекта)"
+  vars:
+    input: "Екипът ни работи по проектът."
+    expected: "Екипът ни работи по проекта."
+
+# ─────────────────────────────────────────────────────────────
+# AGREEMENT — gender and number
+# ─────────────────────────────────────────────────────────────
+- description: "agreement — feminine noun needs feminine participle (издадена)"
+  vars:
+    input: "Фактурата е издаден на 5 май."
+    expected: "Фактурата е издадена на 5 май."
+
+- description: "agreement — masculine noun needs masculine participle (решен)"
+  vars:
+    input: "Проблемът беше решена бързо."
+    expected: "Проблемът беше решен бързо."
+
+- description: "agreement — plural subject needs plural verb (попадат)"
+  vars:
+    input: "Данните не попада в обхвата на наредбата."
+    expected: "Данните не попадат в обхвата на наредбата."
+
+- description: "agreement — feminine noun needs feminine adjective (валидна)"
+  vars:
+    input: "Офертата е валидно до края на месеца."
+    expected: "Офертата е валидна до края на месеца."
+
+- description: "agreement — plural subject needs са, not е"
+  vars:
+    input: "Документите е получени."
+    expected: "Документите са получени."
+
+# ─────────────────────────────────────────────────────────────
+# CAPITALIZATION
+# ─────────────────────────────────────────────────────────────
+- description: "capitalization — sentence start and city name"
+  vars:
+    input: "срещата ще се проведе в софия."
+    expected: "Срещата ще се проведе в София."
+
+- description: "capitalization — country names"
+  vars:
+    input: "работим с фирми от българия и гърция."
+    expected: "Работим с фирми от България и Гърция."
+
+- description: "capitalization — sentence start only"
+  vars:
+    input: "моля, изпратете фактурата."
+    expected: "Моля, изпратете фактурата."
+
+# ─────────────────────────────────────────────────────────────
+# WORD SPLIT / JOIN — typical of text extracted from .docx runs
+# ─────────────────────────────────────────────────────────────
+- description: "word-split — word broken in two (докумен ти)"
+  vars:
+    input: "Прилагаме необходимите докумен ти."
+    expected: "Прилагаме необходимите документи."
+
+- description: "word-split — word broken in two (Благо даря)"
+  vars:
+    input: "Благо даря за съдействието."
+    expected: "Благодаря за съдействието."
+
+- description: "word-join — two words run together (Срокътза)"
+  vars:
+    input: "Срокътза изпълнение е 30 дни."
+    expected: "Срокът за изпълнение е 30 дни."
+
+# ─────────────────────────────────────────────────────────────
+# NO-OP — already correct. The model MUST return these unchanged.
+# This is the conservatism check: over-correction is a product bug.
+# ─────────────────────────────────────────────────────────────
+- description: "no-op — correct salutation with vocative comma"
+  vars:
+    input: "Уважаема госпожо Димитрова,"
+    expected: "Уважаема госпожо Димитрова,"
+
+- description: "no-op — correct formal sentence"
+  vars:
+    input: "Във връзка с Вашето запитване прилагаме исканата оферта."
+    expected: "Във връзка с Вашето запитване прилагаме исканата оферта."
+
+- description: "no-op — correct deadline sentence"
+  vars:
+    input: "Срокът за изпълнение е 30 календарни дни."
+    expected: "Срокът за изпълнение е 30 календарни дни."
+
+- description: "no-op — correct пълен член in subject position"
+  vars:
+    input: "Договорът влиза в сила от датата на подписването му."
+    expected: "Договорът влиза в сила от датата на подписването му."
+
+- description: "no-op — correct polite request"
+  vars:
+    input: "Моля, потвърдете получаването на това съобщение."
+    expected: "Моля, потвърдете получаването на това съобщение."
+
+- description: "no-op — correct payment terms"
+  vars:
+    input: "Плащането се извършва по банков път в срок до 14 дни."
+    expected: "Плащането се извършва по банков път в срок до 14 дни."
+
+- description: "no-op — legal reference must not be reformatted"
+  vars:
+    input: "Съгласно чл. 10, ал. 2 от Наредбата срокът е 14 дни."
+    expected: "Съгласно чл. 10, ал. 2 от Наредбата срокът е 14 дни."
+
+- description: "no-op — company name in quotes must not be touched"
+  vars:
+    input: "Фирма „БУЛГАРО ТРЕЙД“ ЕООД подаде оферта на 15 май."
+    expected: "Фирма „БУЛГАРО ТРЕЙД“ ЕООД подаде оферта на 15 май."
+
+- description: "no-op — reference code and date must not be touched"
+  vars:
+    input: "Вх. № УИН-210/26.03.2026 г. е заведен в деловодството."
+    expected: "Вх. № УИН-210/26.03.2026 г. е заведен в деловодството."
+
+- description: "no-op — correct кратък член after preposition"
+  vars:
+    input: "Екипът ни работи по Вашия проект."
+    expected: "Екипът ни работи по Вашия проект."
+
+- description: "no-op — correct sentence with abbreviation"
+  vars:
+    input: "Офисът се намира в гр. Варна, ул. Преслав 12."
+    expected: "Офисът се намира в гр. Варна, ул. Преслав 12."
+
+# ─────────────────────────────────────────────────────────────
+# MULTI-ERROR — several errors in one sentence.
+# Exact match is brittle here, so these are graded by a second model
+# (LLM-as-a-judge) on whether the errors were fixed and meaning preserved.
+# ─────────────────────────────────────────────────────────────
+- description: "multi-error — spelling + comma + date spacing (rubric)"
+  vars:
+    input: "Вьв връзка с договора,който подписахме на 15.01.2026г. Ви изпращаме фактурата за първия етап."
+  assert:
+    - type: llm-rubric
+      value: >
+        The output is a corrected Bulgarian sentence. It must satisfy ALL of the following:
+        (1) "Вьв" is corrected to "Във";
+        (2) a space is added after the comma before "който";
+        (3) a space is added before "г." in the date "15.01.2026 г.";
+        (4) the meaning, the date, the wording and the order of the original are preserved —
+        nothing is added, removed or rephrased;
+        (5) the output contains only the corrected sentence, with no explanation or quotes.
+
+- description: "multi-error — missing commas in a formal sentence (rubric)"
+  vars:
+    input: "Уважаеми господин Иванов във връзка с нашия разговор потвърждаваме че срокът за доставка е 20 работни дни."
+  assert:
+    - type: llm-rubric
+      value: >
+        The output is a corrected Bulgarian sentence. It must satisfy ALL of the following:
+        (1) a comma is added after the salutation "Уважаеми господин Иванов";
+        (2) a comma is added before "че";
+        (3) the name "Иванов" is NOT separated from "господин" by a comma;
+        (4) the delivery term "20 работни дни" is unchanged;
+        (5) no sentence is added, removed or rephrased, and the output contains only the corrected text.
+
+- description: "multi-error — agreement + definite article in one sentence (rubric)"
+  vars:
+    input: "Офертата е валидно до 30 юни, а договора ще бъде подписан следващата седмица."
+  assert:
+    - type: llm-rubric
+      value: >
+        The output is a corrected Bulgarian sentence. It must satisfy ALL of the following:
+        (1) "валидно" is corrected to the feminine form "валидна" to agree with "Офертата";
+        (2) "договора" is corrected to "договорът", because it is the subject of the second clause;
+        (3) the date "30 юни" and the phrase "следващата седмица" are unchanged;
+        (4) nothing is added, removed or rephrased, and the output contains only the corrected text.

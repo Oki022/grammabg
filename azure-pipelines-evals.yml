@@ -1,0 +1,50 @@
+# Nightly LLM quality evaluation for GrammaBG.
+#
+# Runs the Bulgarian correction prompt against a fixed dataset and fails the
+# build when the pass rate drops below the threshold.
+#
+# Requires a SECRET pipeline variable named OPENAI_API_KEY
+# (Pipelines -> Edit -> Variables -> New variable -> tick "Keep this value secret").
+
+trigger: none          # not run on every push — the dataset and prompt change rarely
+pr: none
+
+schedules:
+  - cron: "0 4 * * *"  # 04:00 UTC daily
+    displayName: Nightly LLM eval
+    branches:
+      include:
+        - main
+    always: true       # run even when no code changed — we are watching the model, not the code
+
+pool:
+  name: Default        # self-hosted agent
+
+variables:
+  EVAL_THRESHOLD: "0.95"
+
+steps:
+  - script: |
+      node --version
+      npm --version
+    displayName: "Show Node version"
+
+  - script: |
+      npx --yes promptfoo@latest eval -c promptfooconfig.yaml -o results.json -o results.html --no-cache
+    displayName: "Run LLM evals"
+    workingDirectory: evals
+    continueOnError: true   # promptfoo exits non-zero on the first failing case; the gate below decides
+    env:
+      OPENAI_API_KEY: $(OPENAI_API_KEY)
+
+  - script: |
+      node scripts/check-threshold.mjs results.json $(EVAL_THRESHOLD)
+    displayName: "Quality gate"
+    workingDirectory: evals
+
+  - task: PublishBuildArtifacts@1
+    condition: always()
+    displayName: "Publish eval report"
+    inputs:
+      PathtoPublish: evals/results.html
+      ArtifactName: eval-report

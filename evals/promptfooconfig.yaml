@@ -1,0 +1,49 @@
+description: GrammaBG — Bulgarian correction quality evals
+
+prompts:
+  - file://prompts/correct-bg.txt
+
+providers:
+  - id: openai:chat:gpt-4o-mini
+    config:
+      temperature: 0
+      max_tokens: 600
+
+# Assertions below run on EVERY test case, in addition to each case's own asserts.
+defaultTest:
+  assert:
+    # 1) Output sanity: the model must return plain corrected text, nothing else.
+    - type: javascript
+      value: |
+        const out = String(output || '').trim();
+        const src = String(context.vars.input || '');
+        if (out.length === 0) {
+          return { pass: false, score: 0, reason: 'Empty output' };
+        }
+        if (out.includes('```')) {
+          return { pass: false, score: 0, reason: 'Output wrapped in a markdown code fence' };
+        }
+        if (/^(here is|here's|corrected|коригиран|ето|поправен)/i.test(out)) {
+          return { pass: false, score: 0, reason: 'Model added commentary instead of returning only the text' };
+        }
+        const ratio = out.length / Math.max(src.length, 1);
+        if (ratio < 0.6 || ratio > 1.6) {
+          return { pass: false, score: 0, reason: `Length ratio ${ratio.toFixed(2)} — text was rewritten, not corrected` };
+        }
+        return true;
+
+    # 2) Exact match against the expected correction.
+    #    Cases that have no `expected` var (graded by llm-rubric instead) skip this.
+    - type: javascript
+      value: |
+        if (context.vars.expected === undefined) return true;
+        const out = String(output).trim();
+        const exp = String(context.vars.expected).trim();
+        if (out === exp) return true;
+        return {
+          pass: false,
+          score: 0,
+          reason: `Expected: ${exp}\nGot:      ${out}`
+        };
+
+tests: file://tests/cases.yaml

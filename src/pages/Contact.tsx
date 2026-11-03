@@ -123,7 +123,7 @@ const Contact = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="office@grammabg.com"
+                placeholder={t.contact.emailPlaceholder}
                 autoComplete="email"
                 className="bg-background/40 border-border/50 focus:border-emerald-500/50 transition-all duration-300"
                 disabled={sending}

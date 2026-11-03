@@ -91,7 +91,10 @@ const Auth = ({ mode }: Props) => {
     setSubmitting(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: {
+      redirectTo: `${window.location.origin}/`,
+      queryParams: { prompt: 'select_account' },
+    },
     });
     if (error) {
       toast.error(error.message ?? "Google sign-in failed");
